@@ -1,23 +1,23 @@
 /**
- * @file calculator.h
+ * @file petcare.h
  * 
  * @brief Provides functions for math. utilities
  */
 
-#ifndef CALCULATOR_H
-#define CALCULATOR_H
+#ifndef petcare_H
+#define petcare_H
 
 #include "../../utility/header/commonTypes.h"
 
 namespace Coruh
 {
-    namespace Calculator
+    namespace petcare
     {
         /**
-            @class Calculator
+            @class petcare
             @brief Provides Basic functions for various operations.
         */
-        class Calculator
+        class petcare
         {
         public:
             /**
@@ -59,4 +59,4 @@ namespace Coruh
     }
 }
 
-#endif // CALCULATOR_H
+#endif // petcare_H
