@@ -1,4 +1,4 @@
-//#define ENABLE_petcare_TEST  // Uncomment this line to enable the petcare tests
+﻿//#define ENABLE_petcare_TEST  // Uncomment this line to enable the petcare tests
 
 #include "gtest/gtest.h"
 #include "../../petcare/header/petcare.h"  // Adjust this include path based on your project structure
