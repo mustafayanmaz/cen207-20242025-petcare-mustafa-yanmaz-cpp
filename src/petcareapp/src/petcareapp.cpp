@@ -8,6 +8,8 @@
 #include <unistd.h>  // Linux için
 #endif
 
+#include "petcare.h" // Include UserAuth module
+
 #ifdef _WIN32
 #define CLEAR_SCREEN() system("cls")
 #else
@@ -44,10 +46,8 @@ void drawHorizontalLine(int width) {
 }
 
 void drawFrameWithContent(Menu* menu, int selectedIndex, int width) {
-    // Çerçevenin üst kısmı
     drawHorizontalLine(width);
 
-    // Başlık
     int padding = (width - 2 - strlen(menu->title)) / 2;
     printf("*");
     for (int i = 0; i < padding; i++) printf(" ");
@@ -57,7 +57,6 @@ void drawFrameWithContent(Menu* menu, int selectedIndex, int width) {
 
     drawHorizontalLine(width);
 
-    // Menü elemanları
     for (int i = 0; i < menu->itemCount; i++) {
         printf("* ");
         if (i == selectedIndex) {
@@ -71,18 +70,17 @@ void drawFrameWithContent(Menu* menu, int selectedIndex, int width) {
         printf("*\n");
     }
 
-    // Çerçevenin alt kısmı
     drawHorizontalLine(width);
 }
 
-void navigateMenu(Menu* currentMenu) {
+void navigateMenu(Menu* currentMenu, HashTable* userTable) {
     int selectedIndex = 0;
 
     while (1) {
         CLEAR_SCREEN();
 
-        int consoleWidth = 50; // Sabit genişlik, terminale göre ayarlanabilir
-        int paddingTop = 5;    // Ekranın ortasına yerleştirme için üst boşluk
+        int consoleWidth = 50;
+        int paddingTop = 5;
         for (int i = 0; i < paddingTop; i++) printf("\n");
 
         drawFrameWithContent(currentMenu, selectedIndex, consoleWidth);
@@ -113,7 +111,7 @@ void navigateMenu(Menu* currentMenu) {
         else if (key == '\n') { // ENTER
 #endif
             if (currentMenu->subMenus && selectedIndex < currentMenu->itemCount - 1 && currentMenu->subMenus[selectedIndex]) {
-                navigateMenu(currentMenu->subMenus[selectedIndex]);
+                navigateMenu(currentMenu->subMenus[selectedIndex], userTable);
             }
             else if (strcmp(currentMenu->items[selectedIndex], "Back") == 0) {
                 return;
@@ -121,7 +119,36 @@ void navigateMenu(Menu* currentMenu) {
             else if (strcmp(currentMenu->items[selectedIndex], "Exit") == 0) {
                 CLEAR_SCREEN();
                 printf("Exiting program...\n");
+                saveUsersToFile(userTable, "users.dat");
+                freeHashTable(userTable);
                 exit(0);
+            }
+            else if (strcmp(currentMenu->items[selectedIndex], "Register") == 0) {
+                char username[50], password[50];
+                CLEAR_SCREEN();
+                printf("Enter Username: ");
+                scanf("%s", username);
+                printf("Enter Password: ");
+                scanf("%s", password);
+                addUser(userTable, username, password);
+               
+                printf("User registered successfully!\nPress any key to return...");
+                getch();
+            }
+            else if (strcmp(currentMenu->items[selectedIndex], "Login") == 0) {
+                char username[50], password[50];
+                CLEAR_SCREEN();
+                printf("Enter Username: ");
+                scanf("%s", username);
+                printf("Enter Password: ");
+                scanf("%s", password);
+                if (authenticateUser(userTable, username, password)) {
+                    printf("Login successful!\nPress any key to continue...");
+                }
+                else {
+                    printf("Login failed! Invalid credentials.\nPress any key to return...");
+                }
+                getch();
             }
             else {
                 CLEAR_SCREEN();
@@ -134,6 +161,9 @@ void navigateMenu(Menu* currentMenu) {
     }
 
 int main() {
+    HashTable* userTable = createHashTable();
+    loadUsersFromFile(userTable, "users.dat");
+
     char* authItems[] = { "Login", "Register", "Guest Mode", "Back" };
     char* feedingItems[] = { "Manage Feeding Schedule", "Manage Medication Reminders", "Back" };
     char* vetItems[] = { "Schedule Vet Appointment", "View Vet Appointments", "Back" };
@@ -164,7 +194,7 @@ int main() {
     exerciseMenu.parent = &mainMenu;
     birthdayMenu.parent = &mainMenu;
 
-    navigateMenu(&mainMenu);
+    navigateMenu(&mainMenu, userTable);
 
     return 0;
 }

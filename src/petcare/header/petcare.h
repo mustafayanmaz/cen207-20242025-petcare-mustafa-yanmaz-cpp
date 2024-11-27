@@ -1,62 +1,33 @@
-/**
- * @file petcare.h
- * 
- * @brief Provides functions for math. utilities
- */
+﻿#ifndef PETCARE_H
+#define PETCARE_H
 
-#ifndef petcare_H
-#define petcare_H
+#include <stdio.h>
+#include <stdlib.h>
+#include <string.h>
 
-#include "../../utility/header/commonTypes.h"
+// Define the hash table size
+#define HASH_TABLE_SIZE 100
 
-namespace Coruh
-{
-    namespace petcare
-    {
-        /**
-            @class petcare
-            @brief Provides Basic functions for various operations.
-        */
-        class petcare
-        {
-        public:
-            /**
-             * Adds two numbers.
-             * @param a First operand.
-             * @param b Second operand.
-             * @return The sum of a and b.
-             */
-            static double add(double a, double b);
+// Define the User structure
+typedef struct User {
+    char* username;
+    char* encryptedPassword;
+    struct User* next; // For handling collisions
+} User;
 
-            /**
-             * Subtracts the second number from the first.
-             * @param a Minuend.
-             * @param b Subtrahend.
-             * @return The result of a - b.
-             */
-            static double subtract(double a, double b);
+// Define the HashTable structure
+typedef struct HashTable {
+    User* buckets[HASH_TABLE_SIZE];
+} HashTable;
 
-            /**
-             * Multiplies two numbers.
-             * @param a First operand.
-             * @param b Second operand.
-             * @return The product of a and b.
-             */
-            static double multiply(double a, double b);
+// Function declarations
+HashTable* createHashTable();
+unsigned int hashFunction(const char* str);
+void addUser(HashTable* table, const char* username, const char* password);
+int authenticateUser(HashTable* table, const char* username, const char* password);
+void saveUsersToFile(HashTable* table, const char* filename);
+void loadUsersFromFile(HashTable* table, const char* filename);
+char* encryptPassword(const char* password);
+void freeHashTable(HashTable* table);
 
-            /**
-             * Divides the first number by the second.
-             * Throws std::invalid_argument if the second number is zero.
-             * @param a Dividend.
-             * @param b Divisor.
-             * @return The result of a / b.
-             * @throws std::invalid_argument If b is zero.
-             */
-            static double divide(double a, double b);
-
-
-        };
-    }
-}
-
-#endif // petcare_H
+#endif
