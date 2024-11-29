@@ -399,3 +399,80 @@ void listAllPets(Pet* petList) {
 
     free(arr);
 }
+
+//BFS
+void bfsSearch(Pet* petList, const char* searchKey) {
+    printf("Performing BFS Search for '%s':\n", searchKey);
+
+    if (!petList) {
+        printf("The pet list is empty.\n");
+        return;
+    }
+
+    // Create a queue for BFS
+    Pet* queue[100];
+    int front = 0, rear = 0;
+    int found = 0; // Arama sonucunu izlemek için
+
+    // Enqueue the first pet
+    queue[rear++] = petList;
+
+    while (front < rear) {
+        Pet* current = queue[front++];
+
+        // Check if the current pet matches the search key
+        if (strstr(current->name, searchKey) || strstr(current->type, searchKey)) {
+            printf("Name: %s, Type: %s, Age: %d, Owner: %s\n",
+                current->name, current->type, current->age, current->owner);
+            found = 1;
+        }
+
+        // Add the next pet to the queue
+        if (current->next) {
+            queue[rear++] = current->next;
+        }
+    }
+
+    if (!found) {
+        printf("No pets found matching '%s'.\n", searchKey);
+    }
+}
+
+//DFS
+void dfsSearch(Pet* petList, const char* searchKey) {
+    printf("Performing DFS Search for '%s':\n", searchKey);
+
+    if (!petList) {
+        printf("The pet list is empty.\n");
+        return;
+    }
+
+    // Stack for DFS
+    Pet* stack[100];
+    int top = -1;
+    int found = 0; // Arama sonucunu izlemek için
+
+    // Push the first pet onto the stack
+    stack[++top] = petList;
+
+    while (top >= 0) {
+        Pet* current = stack[top--];
+
+        // Check if the current pet matches the search key
+        if (strstr(current->name, searchKey) || strstr(current->type, searchKey)) {
+            printf("Name: %s, Type: %s, Age: %d, Owner: %s\n",
+                current->name, current->type, current->age, current->owner);
+            found = 1;
+        }
+
+        // Push the next pet onto the stack
+        if (current->next) {
+            stack[++top] = current->next;
+        }
+    }
+
+    if (!found) {
+        printf("No pets found matching '%s'.\n", searchKey);
+    }
+}
+

@@ -63,6 +63,9 @@ void heapSort(PetInfo arr[], int n);
 void listAllPets(Pet* petList);
 
 
+// BFS ve DFS arama fonksiyonları için prototipler
+void bfsSearch(Pet* petList, const char* searchKey);
+void dfsSearch(Pet* petList, const char* searchKey);
 
 
 

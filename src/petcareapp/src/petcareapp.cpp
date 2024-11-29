@@ -234,6 +234,35 @@ void navigatePetsMenu(Menu * petsMenu, Pet * *petList, int isAuthenticated) {
                 printf("Press any key to return...");
                 getch();
             }
+            else if (strcmp(petsMenu->items[selectedIndex], "Search By Name or Type") == 0) {
+                char searchKey[50];
+                int searchMethod = 0;
+
+                CLEAR_SCREEN();
+                printf("Enter Search Key (Name or Type): ");
+                scanf("%s", searchKey);
+
+                CLEAR_SCREEN();
+                printf("Choose search method:\n");
+                printf("1. BFS (Breadth-First Search)\n");
+                printf("2. DFS (Depth-First Search)\n");
+                printf("Enter your choice (1 or 2): ");
+                scanf("%d", &searchMethod);
+
+                CLEAR_SCREEN();
+                if (searchMethod == 1) {
+                    bfsSearch(*petList, searchKey);
+                }
+                else if (searchMethod == 2) {
+                    dfsSearch(*petList, searchKey);
+                }
+                else {
+                    printf("Invalid choice. Returning to menu...\n");
+                }
+
+                printf("Press any key to return...");
+                getch();
+            }
             else if (strcmp(petsMenu->items[selectedIndex], "Back") == 0) {
                 return;
             }
@@ -305,7 +334,7 @@ int main() {
 
     // Menü elemanları
     char* authItems[] = { "Login", "Register", "Guest Mode", "Exit" };
-    char* petItems[] = { "Add Pet", "Update Pet", "Delete", "List All Pets", "Back" };
+    char* petItems[] = { "Add Pet", "Update Pet", "Delete", "List All Pets", "Search By Name or Type", "Back" };
     char* feedingItems[] = { "Manage Feeding Schedule", "Manage Medication Reminders", "Back" };
     char* vetItems[] = { "Schedule Vet Appointment", "View Vet Appointments", "Back" };
     char* exerciseItems[] = { "Set Exercise Routine", "Set Grooming Schedule", "Back" };
@@ -321,7 +350,7 @@ int main() {
 
     // Menü yapıları
     Menu authMenu = { "User Authentication", NULL, authItems, 4, NULL };
-    Menu petsMenu = { "Manage Pets", NULL, petItems, 5, NULL };
+    Menu petsMenu = { "Manage Pets", NULL, petItems, 6, NULL };
     Menu feedingMenu = { "Feeding and Medication Schedules", NULL, feedingItems, 3, NULL };
     Menu vetMenu = { "Veterinary Appointment Tracking", NULL, vetItems, 3, NULL };
     Menu exerciseMenu = { "Pet Exercise and Grooming Reminders", NULL, exerciseItems, 3, NULL };
