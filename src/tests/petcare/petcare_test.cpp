@@ -276,5 +276,88 @@ TEST(ListAllPetsTest, OutputsSortedPetList) {
 
 
 
+// Test Set Up: Bir örnek pet listesi oluştur
+Pet* createSamplePetList() {
+    Pet* pet1 = (Pet*)malloc(sizeof(Pet));
+    pet1->name = strdup("Buddy");
+    pet1->type = strdup("Dog");
+    pet1->age = 5;
+    pet1->owner = strdup("Alice");
+    pet1->next = NULL;
+    pet1->prev = NULL;
 
+    Pet* pet2 = (Pet*)malloc(sizeof(Pet));
+    pet2->name = strdup("Milo");
+    pet2->type = strdup("Cat");
+    pet2->age = 3;
+    pet2->owner = strdup("Bob");
+    pet2->next = NULL;
+    pet2->prev = pet1;
+    pet1->next = pet2;
+
+    Pet* pet3 = (Pet*)malloc(sizeof(Pet));
+    pet3->name = strdup("Charlie");
+    pet3->type = strdup("Bird");
+    pet3->age = 2;
+    pet3->owner = strdup("Alice");
+    pet3->next = NULL;
+    pet3->prev = pet2;
+    pet2->next = pet3;
+
+    return pet1;
+}
+
+// Test: BFS Search - Bulunan sonuç
+TEST(BFSSearchTest, SearchByName) {
+    Pet* petList = createSamplePetList();
+    testing::internal::CaptureStdout();
+    bfsSearch(petList, "Buddy");
+    std::string output = testing::internal::GetCapturedStdout();
+    EXPECT_NE(output.find("Name: Buddy"), std::string::npos);
+    freePetList(petList);
+}
+
+// Test: BFS Search - Bulunamayan sonuç
+TEST(BFSSearchTest, SearchByNameNotFound) {
+    Pet* petList = createSamplePetList();
+    testing::internal::CaptureStdout();
+    bfsSearch(petList, "Unknown");
+    std::string output = testing::internal::GetCapturedStdout();
+    EXPECT_NE(output.find("No pets found matching 'Unknown'."), std::string::npos);
+    freePetList(petList);
+}
+
+// Test: DFS Search - Bulunan sonuç
+TEST(DFSSearchTest, SearchByType) {
+    Pet* petList = createSamplePetList();
+    testing::internal::CaptureStdout();
+    dfsSearch(petList, "Cat");
+    std::string output = testing::internal::GetCapturedStdout();
+    EXPECT_NE(output.find("Type: Cat"), std::string::npos);
+    freePetList(petList);
+}
+
+// Test: DFS Search - Bulunamayan sonuç
+TEST(DFSSearchTest, SearchByTypeNotFound) {
+    Pet* petList = createSamplePetList();
+    testing::internal::CaptureStdout();
+    dfsSearch(petList, "Fish");
+    std::string output = testing::internal::GetCapturedStdout();
+    EXPECT_NE(output.find("No pets found matching 'Fish'."), std::string::npos);
+    freePetList(petList);
+}
+
+// Test: Boş liste kontrolü (Hem BFS hem DFS)
+TEST(SearchTest, EmptyList) {
+    Pet* emptyList = NULL;
+    testing::internal::CaptureStdout();
+    bfsSearch(emptyList, "Buddy");
+    std::string bfsOutput = testing::internal::GetCapturedStdout();
+    EXPECT_NE(bfsOutput.find("The pet list is empty."), std::string::npos);
+
+    testing::internal::CaptureStdout();
+    dfsSearch(emptyList, "Buddy");
+    std::string dfsOutput = testing::internal::GetCapturedStdout();
+    EXPECT_NE(dfsOutput.find("The pet list is empty."), std::string::npos);
+}
 
