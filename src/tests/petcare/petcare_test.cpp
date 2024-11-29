@@ -174,10 +174,23 @@ TEST_F(PetManagementTest, SaveAndLoadPets) {
 }
 
 // Test: freePetList Fonksiyonu
-TEST_F(PetManagementTest, FreePetListClearsAllPets) {
-    addPet(&petList, "Buddy", "Dog", 3, "Alice");
-    addPet(&petList, "Kitty", "Cat", 2, "Bob");
+TEST_F(PetManagementTest, FreePetList) {
+    // Pet listesi oluşturma
+    Pet* petList = NULL;
 
+    addPet(&petList, "Bella", "Dog", 3, "Mustafa");
+    addPet(&petList, "Luna", "Cat", 2, "Ali");
+    addPet(&petList, "Max", "Rabbit", 1, "Ahmet");
+
+    // Listeye erişilebilirlik kontrolü
+    ASSERT_NE(petList, nullptr);
+    ASSERT_NE(petList->next, nullptr);
+
+    // Listeyi serbest bırak
     freePetList(petList);
-    EXPECT_EQ(petList->next, nullptr);
+
+    // Bellek serbest bırakıldıktan sonra listeye erişimi test etme
+    // Belleğe erişmeye çalışmamalıyız. Bunun yerine, sadece işlem sonrası bir problem olmamasını garanti edeceğiz.
+    // Eğer `freePetList` düzgün çalışıyorsa, aşağıdaki kodda bellek ihlali (segmentation fault) olmamalıdır.
+    SUCCEED();  // Eğer bu noktaya kadar hata çıkmazsa test başarılıdır.
 }

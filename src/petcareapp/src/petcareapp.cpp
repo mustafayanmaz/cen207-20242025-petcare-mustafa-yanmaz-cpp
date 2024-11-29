@@ -226,7 +226,6 @@ void navigatePetsMenu(Menu * petsMenu, Pet * *petList, int isAuthenticated) {
                 printf("Enter the name of the pet to delete: ");
                 scanf("%s", name);
                 deletePet(petList, name, activeUser);
-                printf("Pet deleted successfully! Press any key to continue...");
                 getch();
             }
             else if (strcmp(petsMenu->items[selectedIndex], "Back") == 0) {
