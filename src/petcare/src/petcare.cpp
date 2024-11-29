@@ -145,4 +145,173 @@ void freeHashTable(HashTable* table) {
     free(table);
 }
 
+void addPet(Pet** petList, const char* name, const char* type, int age, const char* owner) {
+    Pet* newPet = (Pet*)malloc(sizeof(Pet));
+    newPet->name = strdup(name);
+    newPet->type = strdup(type);
+    newPet->age = age;
+    newPet->owner = strdup(owner);
+    newPet->prev = NULL;
+    newPet->next = *petList;
 
+    if (*petList) {
+        (*petList)->prev = newPet;
+    }
+
+    *petList = newPet;
+    printf("Pet added successfully.\n");
+}
+
+void updatePet(Pet* petList, const char* name, const char* owner) {
+    while (petList) {
+        if (strcmp(petList->name, name) == 0 && strcmp(petList->owner, owner) == 0) {
+            char newName[50], newType[50];
+            int newAge;
+            printf("Enter new name: ");
+            scanf("%s", newName);
+            printf("Enter new type: ");
+            scanf("%s", newType);
+            printf("Enter new age: ");
+            scanf("%d", &newAge);
+
+            free(petList->name);
+            free(petList->type);
+            petList->name = strdup(newName);
+            petList->type = strdup(newType);
+            petList->age = newAge;
+            printf("Pet updated successfully.\n");
+            return;
+        }
+        petList = petList->next;
+    }
+    printf("Pet not found or you do not have permission to update this pet.\n");
+}
+
+void deletePet(Pet** petList, const char* name, const char* owner) {
+    Pet* current = *petList;
+    while (current) {
+        if (strcmp(current->name, name) == 0 && strcmp(current->owner, owner) == 0) {
+            if (current->prev) {
+                current->prev->next = current->next;
+            }
+            else {
+                *petList = current->next;
+            }
+            if (current->next) {
+                current->next->prev = current->prev;
+            }
+            free(current->name);
+            free(current->type);
+            free(current->owner);
+            free(current);
+            printf("Pet deleted successfully.\n");
+            return;
+        }
+        current = current->next;
+    }
+    printf("Pet not found or you do not have permission to delete this pet.\n");
+}
+
+void savePetsToFile(Pet* petList, const char* filename) {
+    FILE* file = fopen(filename, "wb");
+    if (!file) {
+        perror("Error opening file");
+        return;
+    }
+
+    while (petList) {
+        // Pet bilgilerini şifreleme
+        char* encryptedName = encryptPassword(petList->name);
+        char* encryptedType = encryptPassword(petList->type);
+        char* encryptedOwner = encryptPassword(petList->owner);
+
+        // Uzunlukları hesaplama
+        size_t nameLen = strlen(encryptedName) + 1;
+        size_t typeLen = strlen(encryptedType) + 1;
+        size_t ownerLen = strlen(encryptedOwner) + 1;
+
+        // Dosyaya yazma
+        fwrite(&nameLen, sizeof(size_t), 1, file);
+        fwrite(encryptedName, sizeof(char), nameLen, file);
+
+        fwrite(&typeLen, sizeof(size_t), 1, file);
+        fwrite(encryptedType, sizeof(char), typeLen, file);
+
+        fwrite(&petList->age, sizeof(int), 1, file);
+
+        fwrite(&ownerLen, sizeof(size_t), 1, file);
+        fwrite(encryptedOwner, sizeof(char), ownerLen, file);
+
+        // Belleği serbest bırakma
+        free(encryptedName);
+        free(encryptedType);
+        free(encryptedOwner);
+
+        petList = petList->next;
+    }
+
+    fclose(file);
+}
+
+
+void loadPetsFromFile(Pet** petList, const char* filename) {
+    FILE* file = fopen(filename, "rb");
+    if (!file) {
+        perror("Error opening file");
+        return;
+    }
+
+    while (1) {
+        size_t nameLen, typeLen, ownerLen;
+        int age;
+
+        // İsim uzunluğunu okuma
+        if (fread(&nameLen, sizeof(size_t), 1, file) != 1) break;
+
+        char* encryptedName = (char*)malloc(nameLen);
+        fread(encryptedName, sizeof(char), nameLen, file);
+
+        // Tür uzunluğunu okuma
+        fread(&typeLen, sizeof(size_t), 1, file);
+        char* encryptedType = (char*)malloc(typeLen);
+        fread(encryptedType, sizeof(char), typeLen, file);
+
+        // Yaşı okuma
+        fread(&age, sizeof(int), 1, file);
+
+        // Sahip uzunluğunu okuma
+        fread(&ownerLen, sizeof(size_t), 1, file);
+        char* encryptedOwner = (char*)malloc(ownerLen);
+        fread(encryptedOwner, sizeof(char), ownerLen, file);
+
+        // Şifre çözme
+        char* decryptedName = encryptPassword(encryptedName);
+        char* decryptedType = encryptPassword(encryptedType);
+        char* decryptedOwner = encryptPassword(encryptedOwner);
+
+        // Pet'i listeye ekleme
+        addPet(petList, decryptedName, decryptedType, age, decryptedOwner);
+
+        // Belleği serbest bırakma
+        free(encryptedName);
+        free(encryptedType);
+        free(encryptedOwner);
+        free(decryptedName);
+        free(decryptedType);
+        free(decryptedOwner);
+    }
+
+    fclose(file);
+}
+
+
+void freePetList(Pet* petList) {
+    while (petList) {
+        Pet* temp = petList;
+        petList = petList->next;
+        free(temp->name);
+        free(temp->type);
+        free(temp->owner);
+        free(temp);
+    }
+}
