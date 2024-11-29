@@ -68,3 +68,116 @@ TEST_F(UserAuthTest, EncryptPassword) {
     free(encrypted);
     free(decrypted);
 }
+class PetManagementTest : public ::testing::Test {
+protected:
+    Pet* petList = nullptr;
+
+    void SetUp() override {
+        // Test başlamadan önce gerekli ayarlar
+    }
+
+    void TearDown() override {
+        // Test bittikten sonra belleği temizle
+        freePetList(petList);
+        petList = nullptr;
+    }
+};
+
+// Test: addPet Fonksiyonu
+TEST_F(PetManagementTest, AddPetAddsNewPetToList) {
+    addPet(&petList, "Buddy", "Dog", 3, "Alice");
+    ASSERT_NE(petList, nullptr);
+    EXPECT_STREQ(petList->name, "Buddy");
+    EXPECT_STREQ(petList->type, "Dog");
+    EXPECT_EQ(petList->age, 3);
+    EXPECT_STREQ(petList->owner, "Alice");
+}
+
+// Test: updatePet Fonksiyonu
+
+
+TEST_F(PetManagementTest, UpdatePet_Success) {
+    // Gerekli ön hazırlık
+    addPet(&petList, "Bella", "Dog", 3, "Mustafa");
+
+    // Kullanıcı girişini simüle et
+    testing::internal::CaptureStdout();
+    const char* name = "Bella";
+    const char* owner = "Mustafa";
+
+    // Yeni veri simülasyonu
+    std::stringstream input("Luna\nDog\n4\n");
+    std::cin.rdbuf(input.rdbuf()); // std::cin yönlendirme
+
+    updatePet(petList, name, owner);
+    std::string output = testing::internal::GetCapturedStdout();
+
+    EXPECT_TRUE(output.find("Pet updated successfully.") != std::string::npos);
+}
+
+
+TEST_F(PetManagementTest, UpdatePet_Failure_NotFound) {
+    testing::internal::CaptureStdout();
+    updatePet(petList, "Nonexistent", "Mustafa");
+    std::string output = testing::internal::GetCapturedStdout();
+
+    EXPECT_TRUE(output.find("Pet not found or you do not have permission to update this pet.") != std::string::npos);
+}
+
+TEST_F(PetManagementTest, UpdatePet_Failure_PermissionDenied) {
+    // Gerekli ön hazırlık
+    addPet(&petList, "Milo", "Cat", 2, "Ahmet");
+
+    testing::internal::CaptureStdout();
+    updatePet(petList, "Milo", "Mustafa");
+    std::string output = testing::internal::GetCapturedStdout();
+
+    EXPECT_TRUE(output.find("Pet not found or you do not have permission to update this pet.") != std::string::npos);
+}
+
+
+
+
+// Test: deletePet Fonksiyonu
+TEST_F(PetManagementTest, DeletePetRemovesCorrectPet) {
+    addPet(&petList, "Buddy", "Dog", 3, "Alice");
+    deletePet(&petList, "Buddy", "Alice");
+
+    EXPECT_EQ(petList, nullptr); // Liste boş olmalı
+}
+
+// Test: savePetsToFile ve loadPetsFromFile Fonksiyonları
+TEST_F(PetManagementTest, SaveAndLoadPets) {
+    addPet(&petList, "Buddy", "Dog", 3, "Alice");
+    addPet(&petList, "Kitty", "Cat", 2, "Bob");
+
+    savePetsToFile(petList, "pets_test.dat");
+
+    Pet* loadedPets = nullptr;
+    loadPetsFromFile(&loadedPets, "pets_test.dat");
+
+    // İlk pet'i kontrol et
+    ASSERT_NE(loadedPets, nullptr);
+    EXPECT_STREQ(loadedPets->name, "Buddy");
+    EXPECT_STREQ(loadedPets->type, "Dog");
+    EXPECT_EQ(loadedPets->age, 3);
+    EXPECT_STREQ(loadedPets->owner, "Alice");
+
+    // İkinci pet'i kontrol et
+    ASSERT_NE(loadedPets->next, nullptr);
+    EXPECT_STREQ(loadedPets->next->name, "Kitty");
+    EXPECT_STREQ(loadedPets->next->type, "Cat");
+    EXPECT_EQ(loadedPets->next->age, 2);
+    EXPECT_STREQ(loadedPets->next->owner, "Bob");
+
+    freePetList(loadedPets);
+}
+
+// Test: freePetList Fonksiyonu
+TEST_F(PetManagementTest, FreePetListClearsAllPets) {
+    addPet(&petList, "Buddy", "Dog", 3, "Alice");
+    addPet(&petList, "Kitty", "Cat", 2, "Bob");
+
+    freePetList(petList);
+    EXPECT_EQ(petList->next, nullptr);
+}
