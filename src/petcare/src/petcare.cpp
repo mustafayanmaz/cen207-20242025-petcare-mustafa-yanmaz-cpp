@@ -16,8 +16,7 @@ HashTable* createHashTable() {
     return table;
 }
 
-
-//XOR
+// XOR encryption
 char* encryptPassword(const char* password) {
     char* encrypted = (char*)malloc(strlen(password) + 1);
     for (size_t i = 0; i < strlen(password); i++) {
@@ -26,8 +25,6 @@ char* encryptPassword(const char* password) {
     encrypted[strlen(password)] = '\0';
     return encrypted;
 }
-
-
 
 void addUser(HashTable* table, const char* username, const char* password) {
     unsigned int index = hashFunction(username);
@@ -51,8 +48,6 @@ void addUser(HashTable* table, const char* username, const char* password) {
     newUser->next = table->buckets[index];
     table->buckets[index] = newUser;
 }
-
-
 
 int authenticateUser(HashTable* table, const char* username, const char* password) {
     unsigned int index = hashFunction(username);
@@ -78,11 +73,9 @@ void saveUsersToFile(HashTable* table, const char* filename) {
         return;
     }
 
-    printf("Saving users to file '%s'\n", filename);
     for (int i = 0; i < HASH_TABLE_SIZE; i++) {
         User* current = table->buckets[i];
         while (current) {
-            // Kullanıcı adı ve şifreyi şifrele
             char* encryptedUsername = encryptPassword(current->username);
 
             size_t usernameLen = strlen(encryptedUsername) + 1;
@@ -94,20 +87,13 @@ void saveUsersToFile(HashTable* table, const char* filename) {
             fwrite(&passwordLen, sizeof(size_t), 1, file);
             fwrite(current->encryptedPassword, sizeof(char), passwordLen, file);
 
-            // Debug mesajı:
-            printf("DEBUG: Saving - Encrypted Username: '%s', EncryptedPassword: '%s'\n",
-                encryptedUsername, current->encryptedPassword);
-
-            free(encryptedUsername); // Şifrelenen kullanıcı adını serbest bırak
+            free(encryptedUsername);
             current = current->next;
         }
     }
 
     fclose(file);
-    printf("Users saved successfully.\n");
 }
-
-
 
 void loadUsersFromFile(HashTable* table, const char* filename) {
     FILE* file = fopen(filename, "rb");
@@ -116,7 +102,6 @@ void loadUsersFromFile(HashTable* table, const char* filename) {
         return;
     }
 
-    printf("Loading users from file '%s'\n", filename);
     while (1) {
         size_t usernameLen, passwordLen;
 
@@ -129,14 +114,8 @@ void loadUsersFromFile(HashTable* table, const char* filename) {
         char* encryptedPassword = (char*)malloc(passwordLen);
         fread(encryptedPassword, sizeof(char), passwordLen, file);
 
-        // Kullanıcı adını çöz
         char* decryptedUsername = encryptPassword(encryptedUsername);
 
-       /* // Debug mesajı:
-        printf("DEBUG: Loading - Decrypted Username: '%s', EncryptedPassword: '%s'\n",
-            decryptedUsername, encryptedPassword);*/
-
-        // Yeni kullanıcı ekleme
         unsigned int index = hashFunction(decryptedUsername);
         User* newUser = (User*)malloc(sizeof(User));
         newUser->username = strdup(decryptedUsername);
@@ -150,11 +129,7 @@ void loadUsersFromFile(HashTable* table, const char* filename) {
     }
 
     fclose(file);
-    printf("Users loaded successfully.\n");
 }
-
-
-
 
 void freeHashTable(HashTable* table) {
     for (int i = 0; i < HASH_TABLE_SIZE; i++) {
@@ -169,3 +144,5 @@ void freeHashTable(HashTable* table) {
     }
     free(table);
 }
+
+

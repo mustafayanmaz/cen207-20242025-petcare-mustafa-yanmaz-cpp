@@ -30,4 +30,20 @@ void loadUsersFromFile(HashTable* table, const char* filename);
 char* encryptPassword(const char* password);
 void freeHashTable(HashTable* table);
 
+typedef struct Pet {
+    char* name;
+    char* type;
+    int age;
+    char* owner;
+    struct Pet* prev;
+    struct Pet* next;
+} Pet;
+
+void addPet(Pet** petList, const char* name, const char* type, int age, const char* owner);
+void updatePet(Pet* petList, const char* name, const char* owner);
+void deletePet(Pet** petList, const char* name, const char* owner);
+void savePetsToFile(Pet* petList, const char* filename);
+void loadPetsFromFile(Pet** petList, const char* filename);
+void freePetList(Pet* petList);
+
 #endif

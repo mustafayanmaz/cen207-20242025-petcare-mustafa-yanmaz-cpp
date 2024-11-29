@@ -1,5 +1,6 @@
 ﻿#include <gtest/gtest.h>
 #include "petcare.h"
+#include <sstream>
 
 // Fixture class for setting up a HashTable before each test
 class UserAuthTest : public ::testing::Test {
