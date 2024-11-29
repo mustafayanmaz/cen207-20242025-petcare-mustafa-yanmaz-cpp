@@ -228,6 +228,12 @@ void navigatePetsMenu(Menu * petsMenu, Pet * *petList, int isAuthenticated) {
                 deletePet(petList, name, activeUser);
                 getch();
             }
+            else if (strcmp(petsMenu->items[selectedIndex], "List All Pets") == 0) {
+                CLEAR_SCREEN();
+                listAllPets(*petList);
+                printf("Press any key to return...");
+                getch();
+            }
             else if (strcmp(petsMenu->items[selectedIndex], "Back") == 0) {
                 return;
             }
@@ -299,7 +305,7 @@ int main() {
 
     // Menü elemanları
     char* authItems[] = { "Login", "Register", "Guest Mode", "Exit" };
-    char* petItems[] = { "Add Pet", "Update Pet", "Delete", "Back" };
+    char* petItems[] = { "Add Pet", "Update Pet", "Delete", "List All Pets", "Back" };
     char* feedingItems[] = { "Manage Feeding Schedule", "Manage Medication Reminders", "Back" };
     char* vetItems[] = { "Schedule Vet Appointment", "View Vet Appointments", "Back" };
     char* exerciseItems[] = { "Set Exercise Routine", "Set Grooming Schedule", "Back" };
@@ -315,7 +321,7 @@ int main() {
 
     // Menü yapıları
     Menu authMenu = { "User Authentication", NULL, authItems, 4, NULL };
-    Menu petsMenu = { "Manage Pets", NULL, petItems, 4, NULL };
+    Menu petsMenu = { "Manage Pets", NULL, petItems, 5, NULL };
     Menu feedingMenu = { "Feeding and Medication Schedules", NULL, feedingItems, 3, NULL };
     Menu vetMenu = { "Veterinary Appointment Tracking", NULL, vetItems, 3, NULL };
     Menu exerciseMenu = { "Pet Exercise and Grooming Reminders", NULL, exerciseItems, 3, NULL };

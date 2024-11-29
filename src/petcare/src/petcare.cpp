@@ -315,3 +315,87 @@ void freePetList(Pet* petList) {
         free(temp);
     }
 }
+
+
+
+
+// Pet dizisini heapify eder
+void heapify(PetInfo arr[], int n, int i) {
+    int largest = i; // En büyük eleman
+    int left = 2 * i + 1;
+    int right = 2 * i + 2;
+
+    // Sol çocuk en büyükse
+    if (left < n && strcmp(arr[left].name, arr[largest].name) > 0) {
+        largest = left;
+    }
+
+    // Sağ çocuk en büyükse
+    if (right < n && strcmp(arr[right].name, arr[largest].name) > 0) {
+        largest = right;
+    }
+
+    // Eğer en büyük değiştiyse, swap ve tekrar heapify
+    if (largest != i) {
+        PetInfo temp = arr[i];
+        arr[i] = arr[largest];
+        arr[largest] = temp;
+        heapify(arr, n, largest);
+    }
+}
+
+// Heap Sort Algoritması
+void heapSort(PetInfo arr[], int n) {
+    // Max heap oluştur
+    for (int i = n / 2 - 1; i >= 0; i--) {
+        heapify(arr, n, i);
+    }
+
+    // Elemanları sıralı olarak çıkar
+    for (int i = n - 1; i > 0; i--) {
+        PetInfo temp = arr[0];
+        arr[0] = arr[i];
+        arr[i] = temp;
+        heapify(arr, i, 0);
+    }
+}
+
+// Pet listesini sıralı diziye dönüştür ve yazdır
+void listAllPets(Pet* petList) {
+    int count = 0;
+    Pet* temp = petList;
+
+    // Pet sayısını öğren
+    while (temp) {
+        count++;
+        temp = temp->next;
+    }
+
+    if (count == 0) {
+        printf("No pets to display.\n");
+        return;
+    }
+
+    // Diziye aktar
+    PetInfo* arr = (PetInfo*)malloc(count * sizeof(PetInfo));
+    temp = petList;
+    for (int i = 0; i < count; i++) {
+        strcpy(arr[i].name, temp->name);
+        strcpy(arr[i].type, temp->type);
+        arr[i].age = temp->age;
+        strcpy(arr[i].owner, temp->owner);
+        temp = temp->next;
+    }
+
+    // Heap Sort ile sırala
+    heapSort(arr, count);
+
+    // Sıralı listeyi yazdır
+    printf("List of All Pets (Sorted by Name):\n");
+    for (int i = 0; i < count; i++) {
+        printf("Name: %s, Type: %s, Age: %d, Owner: %s\n",
+            arr[i].name, arr[i].type, arr[i].age, arr[i].owner);
+    }
+
+    free(arr);
+}

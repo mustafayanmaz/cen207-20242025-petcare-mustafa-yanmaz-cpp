@@ -46,4 +46,25 @@ void savePetsToFile(Pet* petList, const char* filename);
 void loadPetsFromFile(Pet** petList, const char* filename);
 void freePetList(Pet* petList);
 
+
+// PetInfo yapısı (Heap Sort için kullanılıyor)
+typedef struct PetInfo {
+    char name[50];
+    char type[50];
+    int age;
+    char owner[50];
+} PetInfo;
+
+// Heap Sort ve yardımcı fonksiyonlar
+void heapify(PetInfo arr[], int n, int i);
+void heapSort(PetInfo arr[], int n);
+
+// List All Pets fonksiyonu
+void listAllPets(Pet* petList);
+
+
+
+
+
+
 #endif
