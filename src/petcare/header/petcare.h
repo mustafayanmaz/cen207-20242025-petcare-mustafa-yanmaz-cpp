@@ -69,5 +69,24 @@ void dfsSearch(Pet* petList, const char* searchKey);
 
 
 
+// XOR Linked List Node
+typedef struct Appointment {
+    char petName[50];
+    char description[100];
+    int day;
+    int month;
+    char owner[50];
+    struct Appointment* xorPtr; // XOR Pointer
+} Appointment;
+
+// XOR Linked List Functions
+Appointment* XOR(Appointment* a, Appointment* b);
+void addAppointment(const char* petName, const char* description, int day, int month, const char* owner, Pet* petList);
+bool updateAppointment(const char* petName, int oldDay, int oldMonth, int newDay, int newMonth, const char* newDescription, const char* owner);
+bool cancelAppointment(const char* petName, int day, int month, const char* owner);
+void viewAppointments(int month);
+// File operations for appointments
+void saveAppointmentsToFile();
+void loadAppointmentsFromFile();
 
 #endif

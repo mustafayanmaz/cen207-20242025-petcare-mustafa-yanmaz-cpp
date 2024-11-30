@@ -361,3 +361,12 @@ TEST(SearchTest, EmptyList) {
     EXPECT_NE(dfsOutput.find("The pet list is empty."), std::string::npos);
 }
 
+
+
+
+
+
+
+
+
+

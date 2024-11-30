@@ -1,5 +1,6 @@
 ﻿#include "petcare.h"
-
+#include <stdbool.h>
+#include <stdint.h>
 unsigned int hashFunction(const char* str) {
     unsigned int hash = 0;
     while (*str) {
@@ -474,5 +475,307 @@ void dfsSearch(Pet* petList, const char* searchKey) {
     if (!found) {
         printf("No pets found matching '%s'.\n", searchKey);
     }
+}
+
+
+
+
+
+// XOR Helper: XOR two pointers
+Appointment* XOR(Appointment* a, Appointment* b) {
+    return (Appointment*)((uintptr_t)(a) ^ (uintptr_t)(b));
+}
+
+// Global XOR Linked List Head
+static Appointment* appointmentList = NULL;
+
+// Add Appointment
+void addAppointment(const char* petName, const char* description, int day, int month, const char* owner, Pet* petList) {
+    // Kullanıcının hayvanın sahibi olup olmadığını kontrol et
+    Pet* currentPet = petList;
+    while (currentPet != NULL) {
+        if (strcmp(currentPet->name, petName) == 0 && strcmp(currentPet->owner, owner) == 0) {
+            // Gün doluluğunu kontrol et
+            Appointment* current = appointmentList;
+            Appointment* prev = NULL;
+            Appointment* next = NULL;
+
+            while (current != NULL) {
+                next = XOR(prev, current->xorPtr);
+
+                if (current->month == month && current->day == day) {
+                    printf("Error: The date %02d/%02d is already occupied. Appointment not added.\n", day, month);
+                    return;
+                }
+
+                prev = current;
+                current = next;
+            }
+
+            // Gün boş, randevu ekle
+            Appointment* newAppointment = (Appointment*)malloc(sizeof(Appointment));
+            strcpy(newAppointment->petName, petName);
+            strcpy(newAppointment->description, description);
+            newAppointment->day = day;
+            newAppointment->month = month;
+            strcpy(newAppointment->owner, owner);
+            newAppointment->xorPtr = XOR(appointmentList, NULL);
+
+            if (appointmentList != NULL) {
+                appointmentList->xorPtr = XOR(newAppointment, XOR(appointmentList->xorPtr, NULL));
+            }
+
+            appointmentList = newAppointment;
+            printf("Appointment added successfully.\n");
+            return;
+        }
+        currentPet = currentPet->next;
+    }
+
+    // Eğer hayvan bulunmazsa veya kullanıcı sahibi değilse
+    printf("Error: You do not own a pet named '%s'. Appointment not added.\n", petName);
+}
+
+
+
+
+
+// Update Appointment
+bool updateAppointment(const char* petName, int oldDay, int oldMonth, int newDay, int newMonth, const char* newDescription, const char* owner) {
+    Appointment* current = appointmentList;
+    Appointment* prev = NULL;
+    Appointment* next;
+
+    // Kullanıcı sahibini kontrol et
+    while (current != NULL) {
+        if (strcmp(current->petName, petName) == 0 &&
+            strcmp(current->owner, owner) == 0 &&
+            current->day == oldDay &&
+            current->month == oldMonth) {
+            break; // Sahiplik doğrulandı ve eski randevu bulundu
+        }
+        next = XOR(prev, current->xorPtr);
+        prev = current;
+        current = next;
+    }
+
+    if (current == NULL) {
+        printf("Error: No matching appointment found for '%s' on %02d/%02d.\n", petName, oldDay, oldMonth);
+        return false;
+    }
+
+    // Yeni tarih çakışmasını kontrol et
+    Appointment* temp = appointmentList;
+    Appointment* prevTemp = NULL;
+    Appointment* nextTemp = NULL;
+
+    while (temp != NULL) {
+        nextTemp = XOR(prevTemp, temp->xorPtr);
+
+        if (temp->month == newMonth && temp->day == newDay &&
+            strcmp(temp->petName, petName) != 0) { // Aynı hayvanın değilse
+            printf("Error: The date %02d/%02d is already occupied by another appointment. Update failed.\n", newDay, newMonth);
+            return false;
+        }
+
+        prevTemp = temp;
+        temp = nextTemp;
+    }
+
+    // Eski randevu bilgilerini sakla
+    int oldSavedDay = current->day;
+    int oldSavedMonth = current->month;
+    char oldSavedDescription[100];
+    strcpy(oldSavedDescription, current->description);
+
+    // Güncellemeyi uygula
+    current->day = newDay;
+    current->month = newMonth;
+    strcpy(current->description, newDescription);
+
+    // Eski ve yeni randevuyu ekrana yazdır
+    printf("\nAppointment updated successfully!\n");
+    printf("Old Appointment:\n");
+    printf("Date: %02d/%02d, Description: %s\n", oldSavedDay, oldSavedMonth, oldSavedDescription);
+    printf("New Appointment:\n");
+    printf("Date: %02d/%02d, Description: %s\n", newDay, newMonth, newDescription);
+
+    return true;
+}
+
+
+
+
+
+
+// Cancel Appointment
+bool cancelAppointment(const char* petName, int day, int month, const char* owner) {
+    Appointment* current = appointmentList;
+    Appointment* prev = NULL;
+    Appointment* next;
+
+    // Kullanıcı sahibini hemen kontrol et
+    while (current != NULL) {
+        if (strcmp(current->petName, petName) == 0 &&
+            strcmp(current->owner, owner) == 0) {
+            break; // Sahiplik doğrulandı
+        }
+        next = XOR(prev, current->xorPtr);
+        prev = current;
+        current = next;
+    }
+
+    if (current == NULL) {
+        printf("Error: You do not own a pet named '%s'.\n", petName);
+        return false; // Listeyi dolaşmaya devam etmeden çık
+    }
+
+    // Randevu silme işlemleri
+    prev = NULL;
+    current = appointmentList;
+
+    while (current != NULL) {
+        next = XOR(prev, current->xorPtr);
+
+        if (strcmp(current->petName, petName) == 0 &&
+            strcmp(current->owner, owner) == 0 &&
+            current->month == month &&
+            current->day == day) {
+
+            // XOR Linked List'ten düğümü kaldır
+            if (prev != NULL) {
+                prev->xorPtr = XOR(XOR(prev->xorPtr, current), next);
+            }
+            if (next != NULL) {
+                next->xorPtr = XOR(prev, XOR(next->xorPtr, current));
+            }
+            if (current == appointmentList) {
+                appointmentList = next;
+            }
+            free(current);
+            printf("Appointment canceled successfully.\n");
+            return true;
+        }
+
+        prev = current;
+        current = next;
+    }
+
+    printf("No matching appointment found for the specified date or you dont have permission this pet.\n");
+    return false;
+}
+
+
+
+
+// View Appointments (Sparse Matrix)
+void viewAppointments(int month) {
+    printf("\nAppointments for month %d:\n", month);
+    int days[31] = { 0 }; // 31 günün durumu: 0 = boş, 1 = dolu
+
+    Appointment* current = appointmentList;
+    Appointment* prev = NULL;
+    Appointment* next;
+
+    // Sparse Matrix için randevuları işaretle
+    while (current != NULL) {
+        next = XOR(prev, current->xorPtr);
+        if (current->month == month) {
+            days[current->day - 1] = 1;
+        }
+        prev = current;
+        current = next;
+    }
+
+    // Takvim çizimi
+    printf("Sun Mon Tue Wed Thu Fri Sat\n");
+    for (int i = 1; i <= 31; i++) {
+        if (days[i - 1] == 1) {
+            printf("\033[31m%3d\033[0m ", i); // Dolu gün: kırmızı
+        }
+        else {
+            printf("\033[34m%3d\033[0m ", i); // Boş gün: mavi
+        }
+        if (i % 7 == 0) {
+            printf("\n");
+        }
+    }
+    printf("\n");
+}
+
+void xorEncryptDecrypt(char* data, size_t len, const char* key) {
+    size_t keyLen = strlen(key);
+    for (size_t i = 0; i < len; i++) {
+        data[i] ^= key[i % keyLen];
+    }
+}
+
+// Save appointments to file
+void saveAppointmentsToFile() {
+    FILE* file = fopen("appointment.data", "wb");
+    if (!file) {
+        perror("Error opening file");
+        return;
+    }
+
+    Appointment* current = appointmentList;
+    Appointment* prev = NULL;
+    Appointment* next;
+
+    const char* key = "SecretKey"; // Şifreleme anahtarı
+
+    while (current != NULL) {
+        next = XOR(prev, current->xorPtr);
+
+        // Şifreleme işlemi
+        xorEncryptDecrypt((char*)current, sizeof(Appointment), key);
+
+        fwrite(current, sizeof(Appointment), 1, file);
+
+        // Şifreyi geri çözerek veri yapısını eski haline getir
+        xorEncryptDecrypt((char*)current, sizeof(Appointment), key);
+
+        prev = current;
+        current = next;
+    }
+
+    fclose(file);
+}
+
+
+// Load appointments from file
+void loadAppointmentsFromFile() {
+    FILE* file = fopen("appointment.data", "rb");
+    if (!file) {
+        perror("Error opening file");
+        return;
+    }
+
+    appointmentList = NULL;
+    Appointment* prev = NULL;
+
+    const char* key = "SecretKey"; // Şifreleme anahtarı
+
+    while (1) {
+        Appointment* newAppointment = (Appointment*)malloc(sizeof(Appointment));
+        if (fread(newAppointment, sizeof(Appointment), 1, file) != 1) {
+            free(newAppointment);
+            break;
+        }
+
+        // Şifreyi çöz
+        xorEncryptDecrypt((char*)newAppointment, sizeof(Appointment), key);
+
+        newAppointment->xorPtr = XOR(prev, NULL);
+        if (prev != NULL) {
+            prev->xorPtr = XOR(newAppointment, XOR(prev->xorPtr, NULL));
+        }
+        else {
+            appointmentList = newAppointment;
+        }
+        prev = newAppointment;
+    }
+
+    fclose(file);
 }
 

@@ -270,6 +270,117 @@ void navigatePetsMenu(Menu * petsMenu, Pet * *petList, int isAuthenticated) {
         }
     }
 
+    void navigateVetMenu(Menu* vetMenu, const char* activeUser, Pet* petList) {
+        int selectedIndex = 0;
+
+        while (1) {
+            CLEAR_SCREEN();
+            int consoleWidth = 50;
+            int paddingTop = 5;
+            for (int i = 0; i < paddingTop; i++) printf("\n");
+
+            drawFrameWithContent(vetMenu, selectedIndex, consoleWidth);
+
+            int key = getch();
+#ifdef _WIN32
+            if (key == 0 || key == 224) {
+                key = getch();
+                if (key == 72) { // UP_ARROW
+                    selectedIndex = (selectedIndex - 1 + vetMenu->itemCount) % vetMenu->itemCount;
+                }
+                else if (key == 80) { // DOWN_ARROW
+                    selectedIndex = (selectedIndex + 1) % vetMenu->itemCount;
+                }
+            }
+            else if (key == 13) { // ENTER
+#else
+            if (key == '\033') {
+                getch();
+                key = getch();
+                if (key == 'A') { // UP_ARROW
+                    selectedIndex = (selectedIndex - 1 + vetMenu->itemCount) % vetMenu->itemCount;
+                }
+                else if (key == 'B') { // DOWN_ARROW
+                    selectedIndex = (selectedIndex + 1) % vetMenu->itemCount;
+                }
+            }
+            else if (key == '\n') { // ENTER
+#endif
+                if (strcmp(vetMenu->items[selectedIndex], "Add Appointment") == 0) {
+                    char petName[50], description[100];
+                    int day, month;
+                    CLEAR_SCREEN();
+                    printf("Enter pet's name: ");
+                    scanf("%s", petName);
+                    printf("Enter day and month (e.g., 15 11): ");
+                    scanf("%d %d", &day, &month);
+                    printf("Enter description: ");
+                    scanf(" %[^\n]", description);
+                    addAppointment(petName, description, day, month, activeUser, petList);
+                    saveAppointmentsToFile();
+                    printf("Press any key to return...");
+                    getch();
+                }
+                else if (strcmp(vetMenu->items[selectedIndex], "Update Appointment") == 0) {
+                    char petName[50], newDescription[100];
+                    int oldDay, oldMonth, newDay, newMonth;
+
+                    loadAppointmentsFromFile(); // Randevuları dosyadan yükle
+                    CLEAR_SCREEN();
+
+                    // Kullanıcıdan gerekli bilgileri al
+                    printf("Enter pet's name: ");
+                    scanf("%s", petName);
+
+                    printf("Enter current day and month (e.g., 15 11): ");
+                    scanf("%d %d", &oldDay, &oldMonth);
+
+                    printf("Enter new day and month (e.g., 20 11): ");
+                    scanf("%d %d", &newDay, &newMonth);
+
+                    printf("Enter new description: ");
+                    scanf(" %[^\n]", newDescription);
+
+                    // Güncellenmiş `updateAppointment` fonksiyonunu çağır
+                    if (updateAppointment(petName, oldDay, oldMonth, newDay, newMonth, newDescription, activeUser)) {
+                        saveAppointmentsToFile(); // Güncellemeden sonra dosyaya kaydet
+                    }
+
+                    printf("Press any key to return...");
+                    getch();
+                }
+                else if (strcmp(vetMenu->items[selectedIndex], "Cancel Appointment") == 0) {
+                    char petName[50];
+                    loadAppointmentsFromFile();
+                    int day, month;
+                    CLEAR_SCREEN();
+                    printf("Enter pet's name: ");
+                    scanf("%s", petName);
+                    printf("Enter day and month (e.g., 15 11): ");
+                    scanf("%d %d", &day, &month);
+                    cancelAppointment(petName, day, month, activeUser);
+                    printf("Press any key to return...");
+                    getch();
+                    saveAppointmentsToFile();
+                }
+                else if (strcmp(vetMenu->items[selectedIndex], "View Appointments List") == 0) {
+                    int month;
+                    loadAppointmentsFromFile();
+                    CLEAR_SCREEN();
+                    printf("Enter month to view appointments: ");
+                    scanf("%d", &month);
+                    viewAppointments(month);
+                    printf("Press any key to return...");
+                    getch();
+                }
+                else if (strcmp(vetMenu->items[selectedIndex], "Back") == 0) {
+                    return; // Return to main menu
+                }
+            }
+        }
+    }
+
+
 // Ana menü
 void navigateMainMenu(Menu * mainMenu, HashTable * userTable, int* isAuthenticated) {
     int selectedIndex = 0;
@@ -312,12 +423,16 @@ void navigateMainMenu(Menu * mainMenu, HashTable * userTable, int* isAuthenticat
             if (strcmp(mainMenu->items[selectedIndex], "Manage Pets") == 0) {
                 navigatePetsMenu(mainMenu->subMenus[0], &petList, *isAuthenticated);
             }
+            else if (strcmp(mainMenu->items[selectedIndex], "Veterinary Appointment Tracking") == 0) {
+                navigateVetMenu(mainMenu->subMenus[1], activeUser, petList);
+            }
             //COMMENT GAY ALİ
             else if (strcmp(mainMenu->items[selectedIndex], "Exit") == 0) {
                 CLEAR_SCREEN();
                 printf("Exiting program...\n");
                 savePetsToFile(petList, "pets.dat");
                 saveUsersToFile(userTable, "users.dat");
+                saveAppointmentsToFile();
                 freePetList(petList);
                 freeHashTable(userTable);
                 exit(0);
@@ -328,21 +443,22 @@ void navigateMainMenu(Menu * mainMenu, HashTable * userTable, int* isAuthenticat
 
 // Programın ana fonksiyonu
 int main() {
+
     int isAuthenticated = 0;
     HashTable* userTable = createHashTable();
     loadUsersFromFile(userTable, "users.dat");
-
+    loadAppointmentsFromFile();
     // Menü elemanları
     char* authItems[] = { "Login", "Register", "Guest Mode", "Exit" };
     char* petItems[] = { "Add Pet", "Update Pet", "Delete", "List All Pets", "Search By Name or Type", "Back" };
     char* feedingItems[] = { "Manage Feeding Schedule", "Manage Medication Reminders", "Back" };
-    char* vetItems[] = { "Schedule Vet Appointment", "View Vet Appointments", "Back" };
+    char* vetItems[] = { "Add Appointment","Update Appointment","Cancel Appointment", "View Appointments List", "Back"};
     char* exerciseItems[] = { "Set Exercise Routine", "Set Grooming Schedule", "Back" };
     char* birthdayItems[] = { "Record Pet Birthday", "Record Adoption Anniversary", "Back" };
     char* mainMenuItems[] = {
         "Manage Pets",
-        "Feeding and Medication Schedules",
         "Veterinary Appointment Tracking",
+        "Feeding and Medication Schedules",
         "Pet Exercise and Grooming Reminders",
         "Pet Birthday and Adoption Anniversary",
         "Exit"
@@ -352,12 +468,12 @@ int main() {
     Menu authMenu = { "User Authentication", NULL, authItems, 4, NULL };
     Menu petsMenu = { "Manage Pets", NULL, petItems, 6, NULL };
     Menu feedingMenu = { "Feeding and Medication Schedules", NULL, feedingItems, 3, NULL };
-    Menu vetMenu = { "Veterinary Appointment Tracking", NULL, vetItems, 3, NULL };
+    Menu vetMenu = { "Veterinary Appointment Tracking", NULL, vetItems, 5, NULL };
     Menu exerciseMenu = { "Pet Exercise and Grooming Reminders", NULL, exerciseItems, 3, NULL };
     Menu birthdayMenu = { "Pet Birthday and Adoption Anniversary", NULL, birthdayItems, 3, NULL };
 
     // Ana menü ve alt menüler
-    Menu* mainSubMenus[] = { &petsMenu, &feedingMenu, &vetMenu, &exerciseMenu, &birthdayMenu, NULL };
+    Menu* mainSubMenus[] = { &petsMenu, &vetMenu, &feedingMenu, &exerciseMenu, &birthdayMenu, NULL };
     Menu mainMenu = { "Main Menu", NULL, mainMenuItems, 6, mainSubMenus };
 
     // Aktif kullanıcıyı takip etmek için global değişken
