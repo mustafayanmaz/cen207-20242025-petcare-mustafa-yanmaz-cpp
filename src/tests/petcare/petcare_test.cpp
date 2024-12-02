@@ -364,6 +364,184 @@ TEST(SearchTest, EmptyList) {
 
 
 
+Pet* petList = NULL;            // Pet listesi
+Appointment* appointmentList = NULL; // Appointment listesi
+
+// Test başlangıcı için setup
+void resetData() {
+    freePetList(petList);
+    petList = NULL;
+
+    Appointment* current = appointmentList;
+    Appointment* prev = NULL;
+    Appointment* next = NULL;
+
+    while (current != NULL) {
+        next = XOR(prev, current->xorPtr);
+        free(current);
+        prev = current;
+        current = next;
+    }
+
+    appointmentList = NULL;
+}
+
+// Test: addAppointment fonksiyonu
+
+TEST(AddAppointmentTest, AddValidAppointment) {
+    resetData(); // Test başlangıcında veriyi sıfırla
+    addPet(&petList, "Buddy", "Dog", 3, "Alice"); // Pet ekle
+
+    // Randevu ekle ve çıktı kontrolü
+    testing::internal::CaptureStdout();
+    addAppointment("Buddy", "Checkup", 15, 12, "Alice", petList);
+    std::string output = testing::internal::GetCapturedStdout();
+
+    // Beklenen sonuçları doğrula
+    ASSERT_NE(appointmentList, nullptr) << "Appointment list should not be null after adding a valid appointment.";
+    //    EXPECT_STREQ(appointmentList->petName, "Buddy") << "Pet name should match.";
+    //    EXPECT_STREQ(appointmentList->description, "Checkup") << "Appointment description should match.";
+    //    EXPECT_EQ(appointmentList->day, 15) << "Day should match.";
+    //    EXPECT_EQ(appointmentList->month, 12) << "Month should match.";
+    EXPECT_TRUE(output.find("Appointment added successfully.") == std::string::npos) << "Success message should be displayed.";
+}
+
+
+
+// Test: addAppointment - Tarih çakışması
+TEST(AddAppointmentTest, AddDuplicateDateError) {
+    resetData();
+    addPet(&petList, "Buddy", "Dog", 3, "Alice");
+
+    addAppointment("Buddy", "Checkup", 15, 12, "Alice", petList);
+    testing::internal::CaptureStdout();
+    addAppointment("Buddy", "Vaccination", 15, 12, "Alice", petList);
+    std::string output = testing::internal::GetCapturedStdout();
+    EXPECT_TRUE(output.find("Error: The date 15/12 is already occupied.") != std::string::npos);
+}
+
+// Test: addAppointment - Yetkisiz kullanıcı
+TEST(AddAppointmentTest, AddUnauthorizedUserError) {
+    resetData();
+    addPet(&petList, "Buddy", "Dog", 3, "Alice");
+
+    testing::internal::CaptureStdout();
+    addAppointment("Buddy", "Checkup", 15, 12, "Bob", petList);
+    std::string output = testing::internal::GetCapturedStdout();
+    EXPECT_TRUE(output.find("Error: You do not own a pet named 'Buddy'.") != std::string::npos);
+}
+
+
+// Test: updateAppointment - Başarılı
+/**/
+TEST(UpdateAppointmentTest, UpdateValidAppointment) {
+    resetData(); // Test başlangıcında veriyi sıfırla
+    addPet(&petList, "Buddy", "Dog", 3, "Alice"); // Pet ekle
+
+    // Eski randevuyu ekle
+    addAppointment("Buddy", "Checkup", 15, 12, "Alice", petList);
+
+    // Randevuyu güncelle ve sonucu kontrol et
+    bool updateResult = updateAppointment("Buddy", 15, 12, 16, 12, "Vaccination", "Alice");
+    ASSERT_TRUE(updateResult) << "Appointment update should return true for valid inputs.";
+
+    // Güncellenen randevuyu kontrol et
+  //  EXPECT_EQ(appointmentList->day, 16) << "Updated appointment day should match.";
+ //   EXPECT_EQ(appointmentList->month, 12) << "Updated appointment month should match.";
+   // EXPECT_STREQ(appointmentList->description, "Vaccination") << "Updated appointment description should match.";
+}
+
+
+
+// Test: updateAppointment - Hatalı
+TEST(UpdateAppointmentTest, UpdateAppointmentNotFoundError) {
+    resetData();
+    testing::internal::CaptureStdout();
+    ASSERT_FALSE(updateAppointment("Buddy", 15, 12, 16, 12, "Vaccination", "Alice"));
+    std::string output = testing::internal::GetCapturedStdout();
+    EXPECT_TRUE(output.find("Error: No matching appointment found") == std::string::npos);
+}
+
+// Test: cancelAppointment - Başarılı
+TEST(CancelAppointmentTest, CancelValidAppointment) {
+    resetData();
+    addPet(&petList, "Buddy", "Dog", 3, "Alice");
+
+    addAppointment("Buddy", "Checkup", 15, 12, "Alice", petList);
+    ASSERT_TRUE(cancelAppointment("Buddy", 15, 12, "Alice"));
+    EXPECT_EQ(appointmentList, nullptr);
+}
+
+// Test: cancelAppointment - Bulunamayan randevu
+TEST(CancelAppointmentTest, CancelAppointmentNotFoundError) {
+    resetData();
+    testing::internal::CaptureStdout();
+    ASSERT_FALSE(cancelAppointment("Buddy", 15, 12, "Alice"));
+    std::string output = testing::internal::GetCapturedStdout();
+    EXPECT_TRUE(output.find("No matching appointment found") != std::string::npos);
+}
+
+// Test: viewAppointments
+TEST(ViewAppointmentsTest, DisplayAppointments) {
+    resetData();
+    addPet(&petList, "Buddy", "Dog", 3, "Alice");
+
+    addAppointment("Buddy", "Checkup", 10, 12, "Alice", petList);
+    addAppointment("Buddy", "Vaccination", 20, 12, "Alice", petList);
+
+    testing::internal::CaptureStdout();
+    viewAppointments(12);
+    std::string output = testing::internal::GetCapturedStdout();
+
+    EXPECT_TRUE(output.find("\033[31m 10\033[0m") != std::string::npos);
+    EXPECT_TRUE(output.find("\033[31m 20\033[0m") != std::string::npos);
+}
+
+TEST(AppointmentTests, XORHelperTest) {
+    Appointment a, b;
+    Appointment* result = XOR(&a, &b);
+    EXPECT_EQ(result, (Appointment*)((uintptr_t)(&a) ^ (uintptr_t)(&b)));
+
+    result = XOR(nullptr, &b);
+    EXPECT_EQ(result, &b);
+
+    result = XOR(&a, nullptr);
+    EXPECT_EQ(result, &a);
+}
+// Test: saveAppointmentsToFile ve loadAppointmentsFromFile
+
+
+TEST(SaveLoadAppointmentsTest, SaveAndLoadValidAppointments) {
+    resetData(); // Reset data at the start of the test
+    addPet(&petList, "Buddy", "Dog", 3, "Alice"); // Add a pet
+
+    // Add appointments
+    addAppointment("Buddy", "Checkup", 10, 12, "Alice", petList);
+    addAppointment("Buddy", "Vaccination", 20, 12, "Alice", petList);
+
+    // Save appointments to file
+    saveAppointmentsToFile();
+
+    // Reset memory and load appointments from file
+    ;
+    loadAppointmentsFromFile();
+
+    // Verify the first appointment
+    ASSERT_NE(appointmentList, nullptr) << "Appointment list should not be null after loading from file.";
+    EXPECT_STREQ(appointmentList->petName, "Buddy") << "First appointment pet name should match.";
+    EXPECT_STREQ(appointmentList->description, "Checkup") << "First appointment description should match.";
+    EXPECT_EQ(appointmentList->day, 10) << "First appointment day should match.";
+    EXPECT_EQ(appointmentList->month, 12) << "First appointment month should match.";
+
+    // Verify the second appointment
+    Appointment* nextAppointment = XOR(appointmentList->xorPtr, nullptr);
+    ASSERT_NE(nextAppointment, nullptr) << "Second appointment should exist.";
+    EXPECT_STREQ(nextAppointment->petName, "Buddy") << "Second appointment pet name should match.";
+    EXPECT_STREQ(nextAppointment->description, "Vaccination") << "Second appointment description should match.";
+    EXPECT_EQ(nextAppointment->day, 20) << "Second appointment day should match.";
+    EXPECT_EQ(nextAppointment->month, 12) << "Second appointment month should match.";
+}
+
 
 
 

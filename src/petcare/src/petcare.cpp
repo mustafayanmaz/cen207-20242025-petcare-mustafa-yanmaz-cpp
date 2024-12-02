@@ -546,35 +546,45 @@ bool updateAppointment(const char* petName, int oldDay, int oldMonth, int newDay
     Appointment* prev = NULL;
     Appointment* next;
 
-    // Kullanıcı sahibini kontrol et
     while (current != NULL) {
+        next = XOR(prev, current->xorPtr);
+
+        if (current == NULL) {
+            printf("Error: Null pointer encountered during traversal.\n");
+            return false;
+        }
+
         if (strcmp(current->petName, petName) == 0 &&
             strcmp(current->owner, owner) == 0 &&
             current->day == oldDay &&
             current->month == oldMonth) {
-            break; // Sahiplik doğrulandı ve eski randevu bulundu
+            break;
         }
-        next = XOR(prev, current->xorPtr);
+
         prev = current;
         current = next;
     }
 
     if (current == NULL) {
-        printf("Error: No matching appointment found for '%s' on %02d/%02d.\n", petName, oldDay, oldMonth);
+        printf("Error: Appointment not found for %s on %02d/%02d.\n", petName, oldDay, oldMonth);
         return false;
     }
 
-    // Yeni tarih çakışmasını kontrol et
+    // Yeni tarih çakışması kontrolü
     Appointment* temp = appointmentList;
     Appointment* prevTemp = NULL;
-    Appointment* nextTemp = NULL;
+    Appointment* nextTemp;
 
     while (temp != NULL) {
         nextTemp = XOR(prevTemp, temp->xorPtr);
 
-        if (temp->month == newMonth && temp->day == newDay &&
-            strcmp(temp->petName, petName) != 0) { // Aynı hayvanın değilse
-            printf("Error: The date %02d/%02d is already occupied by another appointment. Update failed.\n", newDay, newMonth);
+        if (temp == NULL) {
+            printf("Error: Null pointer encountered during date conflict check.\n");
+            return false;
+        }
+
+        if (temp->month == newMonth && temp->day == newDay && strcmp(temp->petName, petName) != 0) {
+            printf("Error: The date %02d/%02d is already occupied. Update failed.\n", newDay, newMonth);
             return false;
         }
 
@@ -582,7 +592,7 @@ bool updateAppointment(const char* petName, int oldDay, int oldMonth, int newDay
         temp = nextTemp;
     }
 
-    // Eski randevu bilgilerini sakla
+    // Randevuyu güncelle
     int oldSavedDay = current->day;
     int oldSavedMonth = current->month;
     char oldSavedDescription[100];
