@@ -98,25 +98,24 @@ TEST_F(PetManagementTest, AddPetAddsNewPetToList) {
 // Test: updatePet Fonksiyonu
 
 
-/*TEST_F(PetManagementTest, UpdatePet_Success) {
-    // Gerekli ön hazırlık
+TEST_F(PetManagementTest, UpdatePet_Success) {
+  
     addPet(&petList, "Bella", "Dog", 3, "Mustafa");
 
-    // Kullanıcı girişini simüle et
+   
     testing::internal::CaptureStdout();
     const char* name = "Bella";
     const char* owner = "Mustafa";
 
-    // Yeni veri simülasyonu
+   
     std::stringstream input("Luna\nDog\n4\n");
-    std::cin.rdbuf(input.rdbuf()); // std::cin yönlendirme
+    std::cin.rdbuf(input.rdbuf()); 
 
     updatePet(petList, name, owner);
     std::string output = testing::internal::GetCapturedStdout();
 
     EXPECT_TRUE(output.find("Pet updated successfully.") != std::string::npos);
 }
-bu amk testi coverage çıkmasını engelliyo ama test başarıyla geçiyo test explorarda*/
 
 TEST_F(PetManagementTest, UpdatePet_Failure_NotFound) {
     testing::internal::CaptureStdout();
