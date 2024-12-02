@@ -270,113 +270,192 @@ void navigatePetsMenu(Menu * petsMenu, Pet * *petList, int isAuthenticated) {
         }
     }
 
-    void navigateVetMenu(Menu* vetMenu, const char* activeUser, Pet* petList) {
-        int selectedIndex = 0;
+// Global pointer for the B+ tree (for pet birthdays)
+BPlusTree* birthdayTree = NULL;
 
-        while (1) {
-            CLEAR_SCREEN();
-            int consoleWidth = 50;
-            int paddingTop = 5;
-            for (int i = 0; i < paddingTop; i++) printf("\n");
+void navigateAdaptationMenu(Menu * adaptationMenu, Pet * petList) {
+    int selectedIndex = 0;
 
-            drawFrameWithContent(vetMenu, selectedIndex, consoleWidth);
+    while (1) {
+        CLEAR_SCREEN();
+        int consoleWidth = 50;
+        int paddingTop = 5;
+        for (int i = 0; i < paddingTop; i++) printf("\n");
 
-            int key = getch();
+        drawFrameWithContent(adaptationMenu, selectedIndex, consoleWidth);
+
+        int key = getch();
 #ifdef _WIN32
-            if (key == 0 || key == 224) {
-                key = getch();
-                if (key == 72) { // UP_ARROW
-                    selectedIndex = (selectedIndex - 1 + vetMenu->itemCount) % vetMenu->itemCount;
-                }
-                else if (key == 80) { // DOWN_ARROW
-                    selectedIndex = (selectedIndex + 1) % vetMenu->itemCount;
-                }
+        if (key == 0 || key == 224) {
+            key = getch();
+            if (key == 72) { // UP_ARROW
+                selectedIndex = (selectedIndex - 1 + adaptationMenu->itemCount) % adaptationMenu->itemCount;
             }
-            else if (key == 13) { // ENTER
+            else if (key == 80) { // DOWN_ARROW
+                selectedIndex = (selectedIndex + 1) % adaptationMenu->itemCount;
+            }
+        }
+        else if (key == 13) { // ENTER
 #else
-            if (key == '\033') {
-                getch();
-                key = getch();
-                if (key == 'A') { // UP_ARROW
-                    selectedIndex = (selectedIndex - 1 + vetMenu->itemCount) % vetMenu->itemCount;
-                }
-                else if (key == 'B') { // DOWN_ARROW
-                    selectedIndex = (selectedIndex + 1) % vetMenu->itemCount;
-                }
+        if (key == '\033') {
+            getch();
+            key = getch();
+            if (key == 'A') { // UP_ARROW
+                selectedIndex = (selectedIndex - 1 + adaptationMenu->itemCount) % adaptationMenu->itemCount;
             }
-            else if (key == '\n') { // ENTER
+            else if (key == 'B') { // DOWN_ARROW
+                selectedIndex = (selectedIndex + 1) % adaptationMenu->itemCount;
+            }
+        }
+        else if (key == '\n') { // ENTER
 #endif
-                if (strcmp(vetMenu->items[selectedIndex], "Add Appointment") == 0) {
-                    char petName[50], description[100];
-                    int day, month;
-                    CLEAR_SCREEN();
-                    printf("Enter pet's name: ");
-                    scanf("%s", petName);
-                    printf("Enter day and month (e.g., 15 11): ");
-                    scanf("%d %d", &day, &month);
-                    printf("Enter description: ");
-                    scanf(" %[^\n]", description);
-                    addAppointment(petName, description, day, month, activeUser, petList);
-                    saveAppointmentsToFile();
-                    printf("Press any key to return...");
+            if (strcmp(adaptationMenu->items[selectedIndex], "Record Pet Birthday") == 0) {
+                char petName[50];
+                int birthdayDay, birthdayMonth, birthdayYear;
+
+                CLEAR_SCREEN();
+                printf("Enter pet's name: ");
+                scanf("%s", petName);
+
+                // Check if the pet exists and belongs to the active user
+                if (!isPetOwnedByUser(petList, petName, activeUser)) {
+                    printf("Error: Pet not found or does not belong to you.\n");
                     getch();
+                    continue;
                 }
-                else if (strcmp(vetMenu->items[selectedIndex], "Update Appointment") == 0) {
-                    char petName[50], newDescription[100];
-                    int oldDay, oldMonth, newDay, newMonth;
 
-                    loadAppointmentsFromFile(); // Randevuları dosyadan yükle
-                    CLEAR_SCREEN();
+                printf("Enter Birthday (day month year, e.g., 15 8 2020): ");
+                scanf("%d %d %d", &birthdayDay, &birthdayMonth, &birthdayYear);
 
-                    // Kullanıcıdan gerekli bilgileri al
-                    printf("Enter pet's name: ");
-                    scanf("%s", petName);
-
-                    printf("Enter current day and month (e.g., 15 11): ");
-                    scanf("%d %d", &oldDay, &oldMonth);
-
-                    printf("Enter new day and month (e.g., 20 11): ");
-                    scanf("%d %d", &newDay, &newMonth);
-
-                    printf("Enter new description: ");
-                    scanf(" %[^\n]", newDescription);
-
-                    // Güncellenmiş `updateAppointment` fonksiyonunu çağır
-                    if (updateAppointment(petName, oldDay, oldMonth, newDay, newMonth, newDescription, activeUser)) {
-                        saveAppointmentsToFile(); // Güncellemeden sonra dosyaya kaydet
-                    }
-
-                    printf("Press any key to return...");
-                    getch();
+                // Insert into B+ tree
+                if (birthdayTree == NULL) {
+                    birthdayTree = createBPlusTree();
                 }
-                else if (strcmp(vetMenu->items[selectedIndex], "Cancel Appointment") == 0) {
-                    char petName[50];
-                    loadAppointmentsFromFile();
-                    int day, month;
-                    CLEAR_SCREEN();
-                    printf("Enter pet's name: ");
-                    scanf("%s", petName);
-                    printf("Enter day and month (e.g., 15 11): ");
-                    scanf("%d %d", &day, &month);
-                    cancelAppointment(petName, day, month, activeUser);
-                    printf("Press any key to return...");
-                    getch();
-                    saveAppointmentsToFile();
-                }
-                else if (strcmp(vetMenu->items[selectedIndex], "View Appointments List") == 0) {
-                    int month;
-                    loadAppointmentsFromFile();
-                    CLEAR_SCREEN();
-                    printf("Enter month to view appointments: ");
-                    scanf("%d", &month);
-                    viewAppointments(month);
-                    printf("Press any key to return...");
-                    getch();
-                }
-                else if (strcmp(vetMenu->items[selectedIndex], "Back") == 0) {
-                    return; // Return to main menu
-                }
+                insertBirthday(birthdayTree, petName, birthdayDay, birthdayMonth, birthdayYear);
+
+                // Save birthdays to file
+                saveBirthdaysToFile(birthdayTree, "birthdays.data", petList);
+
+                printf("Birthday recorded successfully! Press any key to return...");
+                getch();
             }
+            else if (strcmp(adaptationMenu->items[selectedIndex], "Back") == 0) {
+                return; // Return to main menu
+            }
+        }
+        }
+    }
+
+
+
+
+void navigateVetMenu(Menu * vetMenu, const char* activeUser, Pet * petList) {
+    int selectedIndex = 0;
+
+    while (1) {
+        CLEAR_SCREEN();
+        int consoleWidth = 50;
+        int paddingTop = 5;
+        for (int i = 0; i < paddingTop; i++) printf("\n");
+
+        drawFrameWithContent(vetMenu, selectedIndex, consoleWidth);
+
+        int key = getch();
+#ifdef _WIN32
+        if (key == 0 || key == 224) {
+            key = getch();
+            if (key == 72) { // UP_ARROW
+                selectedIndex = (selectedIndex - 1 + vetMenu->itemCount) % vetMenu->itemCount;
+            }
+            else if (key == 80) { // DOWN_ARROW
+                selectedIndex = (selectedIndex + 1) % vetMenu->itemCount;
+            }
+        }
+        else if (key == 13) { // ENTER
+#else
+        if (key == '\033') {
+            getch();
+            key = getch();
+            if (key == 'A') { // UP_ARROW
+                selectedIndex = (selectedIndex - 1 + vetMenu->itemCount) % vetMenu->itemCount;
+            }
+            else if (key == 'B') { // DOWN_ARROW
+                selectedIndex = (selectedIndex + 1) % vetMenu->itemCount;
+            }
+        }
+        else if (key == '\n') { // ENTER
+#endif
+            if (strcmp(vetMenu->items[selectedIndex], "Add Appointment") == 0) {
+                char petName[50], description[100];
+                int day, month;
+                CLEAR_SCREEN();
+                printf("Enter pet's name: ");
+                scanf("%s", petName);
+                printf("Enter day and month (e.g., 15 11): ");
+                scanf("%d %d", &day, &month);
+                printf("Enter description: ");
+                scanf(" %[^\n]", description);
+                addAppointment(petName, description, day, month, activeUser, petList);
+                saveAppointmentsToFile();
+                printf("Press any key to return...");
+                getch();
+            }
+            else if (strcmp(vetMenu->items[selectedIndex], "Update Appointment") == 0) {
+                char petName[50], newDescription[100];
+                int oldDay, oldMonth, newDay, newMonth;
+
+                loadAppointmentsFromFile(); // Randevuları dosyadan yükle
+                CLEAR_SCREEN();
+
+                // Kullanıcıdan gerekli bilgileri al
+                printf("Enter pet's name: ");
+                scanf("%s", petName);
+
+                printf("Enter current day and month (e.g., 15 11): ");
+                scanf("%d %d", &oldDay, &oldMonth);
+
+                printf("Enter new day and month (e.g., 20 11): ");
+                scanf("%d %d", &newDay, &newMonth);
+
+                printf("Enter new description: ");
+                scanf(" %[^\n]", newDescription);
+
+                // Güncellenmiş `updateAppointment` fonksiyonunu çağır
+                if (updateAppointment(petName, oldDay, oldMonth, newDay, newMonth, newDescription, activeUser)) {
+                    saveAppointmentsToFile(); // Güncellemeden sonra dosyaya kaydet
+                }
+
+                printf("Press any key to return...");
+                getch();
+            }
+            else if (strcmp(vetMenu->items[selectedIndex], "Cancel Appointment") == 0) {
+                char petName[50];
+                loadAppointmentsFromFile();
+                int day, month;
+                CLEAR_SCREEN();
+                printf("Enter pet's name: ");
+                scanf("%s", petName);
+                printf("Enter day and month (e.g., 15 11): ");
+                scanf("%d %d", &day, &month);
+                cancelAppointment(petName, day, month, activeUser);
+                printf("Press any key to return...");
+                getch();
+                saveAppointmentsToFile();
+            }
+            else if (strcmp(vetMenu->items[selectedIndex], "View Appointments List") == 0) {
+                int month;
+                loadAppointmentsFromFile();
+                CLEAR_SCREEN();
+                printf("Enter month to view appointments: ");
+                scanf("%d", &month);
+                viewAppointments(month);
+                printf("Press any key to return...");
+                getch();
+            }
+            else if (strcmp(vetMenu->items[selectedIndex], "Back") == 0) {
+                return; // Return to main menu
+            }
+        }
         }
     }
 
@@ -426,12 +505,16 @@ void navigateMainMenu(Menu * mainMenu, HashTable * userTable, int* isAuthenticat
             else if (strcmp(mainMenu->items[selectedIndex], "Veterinary Appointment Tracking") == 0) {
                 navigateVetMenu(mainMenu->subMenus[1], activeUser, petList);
             }
+            else if (strcmp(mainMenu->items[selectedIndex], "Pet Birthday and Adoption Anniversary") == 0) {
+                navigateAdaptationMenu(mainMenu->subMenus[4], petList);
+            }
             //COMMENT GAY ALİ
             else if (strcmp(mainMenu->items[selectedIndex], "Exit") == 0) {
                 CLEAR_SCREEN();
                 printf("Exiting program...\n");
                 savePetsToFile(petList, "pets.dat");
                 saveUsersToFile(userTable, "users.dat");
+                saveAppointmentsToFile();
                 saveAppointmentsToFile();
                 freePetList(petList);
                 freeHashTable(userTable);
@@ -452,7 +535,7 @@ int main() {
     char* authItems[] = { "Login", "Register", "Guest Mode", "Exit" };
     char* petItems[] = { "Add Pet", "Update Pet", "Delete", "List All Pets", "Search By Name or Type", "Back" };
     char* feedingItems[] = { "Manage Feeding Schedule", "Manage Medication Reminders", "Back" };
-    char* vetItems[] = { "Add Appointment","Update Appointment","Cancel Appointment", "View Appointments List", "Back"};
+    char* vetItems[] = { "Add Appointment","Update Appointment","Cancel Appointment", "View Appointments List", "Back" };
     char* exerciseItems[] = { "Set Exercise Routine", "Set Grooming Schedule", "Back" };
     char* birthdayItems[] = { "Record Pet Birthday", "Record Adoption Anniversary", "Back" };
     char* mainMenuItems[] = {
@@ -486,7 +569,7 @@ int main() {
     if (isAuthenticated) {
         navigateMainMenu(&mainMenu, userTable, &isAuthenticated);
     }
-    
+
 
     return 0;
 }

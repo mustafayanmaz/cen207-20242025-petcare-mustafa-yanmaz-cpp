@@ -789,3 +789,189 @@ void loadAppointmentsFromFile() {
     fclose(file);
 }
 
+// Create a new B+ tree
+BPlusTree* createBPlusTree() {
+    BPlusTree* tree = (BPlusTree*)malloc(sizeof(BPlusTree));
+    tree->root = NULL;
+    return tree;
+}
+
+// Function to create a new B+ tree node
+BPlusNode* createBPlusNode() {
+    BPlusNode* newNode = (BPlusNode*)malloc(sizeof(BPlusNode));
+    if (!newNode) {
+        perror("Error: Memory allocation for BPlusNode failed.");
+        exit(EXIT_FAILURE);
+    }
+    newNode->count = 0; // Initialize the node with no keys
+    for (int i = 0; i < 10; i++) {
+        newNode->keys[i] = 0;    // Initialize keys
+        newNode->values[i] = 0;  // Initialize values
+        newNode->children[i] = NULL; // Initialize children pointers
+    }
+    return newNode;
+}
+
+// Insert a birthday into the B+ tree
+void insertBirthday(BPlusTree* tree, const char* petName, int day, int month, int year) {
+    if (!tree->root) {
+        tree->root = createBPlusNode();
+    }
+
+    // Correctly encode date as YYYYMMDD
+    int value = (year * 10000) + (month * 100) + day; // Fix: Year first, then month, then day
+    int key = hashFunction(petName);
+
+    BPlusNode* root = tree->root;
+    root->keys[root->count] = key;
+    root->values[root->count] = value;
+    root->count++;
+}
+
+
+
+// Check if a pet is owned by the active user
+bool isPetOwnedByUser(Pet* petList, const char* petName, const char* owner) {
+    while (petList) {
+        if (strcmp(petList->name, petName) == 0 && strcmp(petList->owner, owner) == 0) {
+            return true;
+        }
+        petList = petList->next;
+    }
+    return false;
+}
+
+// Save birthdays to file
+void saveBirthdaysToFile(BPlusTree* birthdayTree, const char* filename, Pet* petList) {
+    FILE* file = fopen(filename, "wb");
+    if (!file) {
+        perror("Error opening birthdays file");
+        return;
+    }
+
+    // Traverse the B+ tree to write all birthdays
+    if (birthdayTree && birthdayTree->root) {
+        saveBPlusTreeToFile(birthdayTree->root, file, petList);
+    }
+
+    fclose(file);
+    printf("Birthdays saved successfully to %s.\n", filename);
+}
+
+// Recursive helper to save B+ tree nodes
+void saveBPlusTreeToFile(BPlusNode* node, FILE* file, Pet* petList) {
+    if (!node) return;
+
+    const char* encryptionKey = "SecretKey"; // Encryption key
+
+    for (int i = 0; i < node->count; i++) {
+        Pet* currentPet = findPetByName(petList, node->keys[i]);
+        if (currentPet) {
+            // Encrypt pet's name
+            size_t nameLen = strlen(currentPet->name) + 1;
+            char* encryptedName = (char*)malloc(nameLen);
+            strcpy(encryptedName, currentPet->name);
+            xorEncryptDecrypt(encryptedName, nameLen, encryptionKey);
+            fwrite(encryptedName, sizeof(char), nameLen, file);
+            free(encryptedName);
+
+            // Encrypt pet's type
+            size_t typeLen = strlen(currentPet->type) + 1;
+            char* encryptedType = (char*)malloc(typeLen);
+            strcpy(encryptedType, currentPet->type);
+            xorEncryptDecrypt(encryptedType, typeLen, encryptionKey);
+            fwrite(encryptedType, sizeof(char), typeLen, file);
+            free(encryptedType);
+
+            // Write pet's age directly (no encryption needed for integers)
+            fwrite(&currentPet->age, sizeof(int), 1, file);
+
+            // Encrypt owner's name
+            size_t ownerLen = strlen(currentPet->owner) + 1;
+            char* encryptedOwner = (char*)malloc(ownerLen);
+            strcpy(encryptedOwner, currentPet->owner);
+            xorEncryptDecrypt(encryptedOwner, ownerLen, encryptionKey);
+            fwrite(encryptedOwner, sizeof(char), ownerLen, file);
+            free(encryptedOwner);
+
+            // Encrypt encoded birth date
+            int encryptedDate = node->values[i];
+            xorEncryptDecrypt((char*)&encryptedDate, sizeof(int), encryptionKey);
+            fwrite(&encryptedDate, sizeof(int), 1, file);
+        }
+    }
+
+    // Recursively save children
+    for (int i = 0; i <= node->count; i++) {
+        if (node->children[i]) {
+            saveBPlusTreeToFile(node->children[i], file, petList);
+        }
+    }
+}
+
+
+
+// Load birthdays from file
+/*void loadBirthdaysFromFile(BPlusTree* birthdayTree, const char* filename, Pet** petList) {
+    FILE* file = fopen(filename, "rb");
+    if (!file) {
+        perror("Error opening birthdays file");
+        return;
+    }
+
+    const char* encryptionKey = "SecretKey"; // Encryption key
+
+    while (1) {
+        char name[50], type[50], owner[50];
+        int age, encodedDate;
+
+        // Read and decrypt pet's name
+        if (fread(name, sizeof(char), sizeof(name), file) != sizeof(name)) break;
+        xorEncryptDecrypt(name, strlen(name) + 1, encryptionKey);
+
+        // Read and decrypt pet's type
+        if (fread(type, sizeof(char), sizeof(type), file) != sizeof(type)) break;
+        xorEncryptDecrypt(type, strlen(type) + 1, encryptionKey);
+
+        // Read pet's age directly
+        if (fread(&age, sizeof(int), 1, file) != 1) break;
+
+        // Read and decrypt owner's name
+        if (fread(owner, sizeof(char), sizeof(owner), file) != sizeof(owner)) break;
+        xorEncryptDecrypt(owner, strlen(owner) + 1, encryptionKey);
+
+        // Read and decrypt encoded birth date
+        if (fread(&encodedDate, sizeof(int), 1, file) != 1) break;
+        xorEncryptDecrypt((char*)&encodedDate, sizeof(int), encryptionKey);
+
+        // Decode date into day, month, year
+        int day = encodedDate / 10000;
+        int month = (encodedDate / 100) % 100;
+        int year = encodedDate % 100;
+
+        // Add pet back to the list
+        addPet(petList, name, type, age, owner);
+
+        // Add the birth date to the B+ tree
+        if (!birthdayTree->root) {
+            birthdayTree->root = createBPlusNode();
+        }
+        insertBirthday(birthdayTree, name, day, month, year);
+    }
+
+    fclose(file);
+    printf("Birthdays loaded successfully from %s.\n", filename);
+}
+*/
+
+// Find a pet by name
+Pet* findPetByName(Pet* petList, int key) {
+    while (petList) {
+        if (hashFunction(petList->name) == key) {
+            return petList;
+        }
+        petList = petList->next;
+    }
+    return NULL;
+}
+

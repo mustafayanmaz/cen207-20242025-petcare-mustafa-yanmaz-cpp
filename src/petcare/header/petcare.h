@@ -89,4 +89,34 @@ void viewAppointments(int month);
 void saveAppointmentsToFile();
 void loadAppointmentsFromFile();
 
+
+// B+ Tree Node
+typedef struct BPlusNode {
+    int keys[10];
+    int values[10];
+    int count;
+    struct BPlusNode* children[10];
+} BPlusNode;
+
+// B+ Tree
+typedef struct BPlusTree {
+    BPlusNode* root;
+} BPlusTree;
+
+// Function prototypes for B+ tree
+BPlusTree* createBPlusTree();
+void insertBirthday(BPlusTree* tree, const char* petName, int day, int month, int year);
+bool isPetOwnedByUser(Pet* petList, const char* petName, const char* owner);
+
+typedef struct Date {
+    int day;
+    int month;
+    int year;
+} Date;
+
+void saveBirthdaysToFile(BPlusTree* birthdayTree, const char* filename, Pet* petList);
+Pet* findPetByName(Pet* petList, int key);
+void saveBPlusTreeToFile(BPlusNode* node, FILE* file, Pet* petList);
+void loadBirthdaysFromFile(BPlusTree* birthdayTree, const char* filename, Pet** petList);
+
 #endif
