@@ -1,6 +1,8 @@
 ﻿#include <gtest/gtest.h>
 #include "petcare.h"
 #include <sstream>
+#include <cstdio> // For file operations
+
 
 // Fixture class for setting up a HashTable before each test
 class UserAuthTest : public ::testing::Test {
@@ -364,6 +366,7 @@ TEST(SearchTest, EmptyList) {
 
 
 
+
 Pet* petList = NULL;            // Pet listesi
 Appointment* appointmentList = NULL; // Appointment listesi
 
@@ -545,6 +548,114 @@ TEST(SaveLoadAppointmentsTest, SaveAndLoadValidAppointments) {
 
 
 
+// Test fixture to initialize and clean up
+class BPlusTreeTest : public ::testing::Test {
+protected:
+    BPlusTree* tree;
+    Pet* petList;
+
+    void SetUp() override {
+        tree = createBPlusTree();
+        petList = NULL;
+    }
+
+    void TearDown() override {
+        // Free resources
+        freePetList(petList);
+        delete tree;
+    }
+};
+
+// Test: Create a BPlusTree and insert a birthday
+TEST_F(BPlusTreeTest, InsertBirthday) {
+    insertBirthday(tree, "Buddy", 5, 10, 2020);
+    ASSERT_NE(tree->root, nullptr);
+    EXPECT_EQ(tree->root->keys[0], hashFunction("Buddy"));
+    EXPECT_EQ(tree->root->values[0], 20201005); // Encoded as YYYYMMDD
+}
+
+// Test: Add pets and check ownership
+TEST_F(BPlusTreeTest, CheckPetOwnership) {
+    addPet(&petList, "Buddy", "Dog", 3, "John");
+    addPet(&petList, "Kitty", "Cat", 2, "Jane");
+
+    EXPECT_TRUE(isPetOwnedByUser(petList, "Buddy", "John"));
+    EXPECT_FALSE(isPetOwnedByUser(petList, "Kitty", "John"));
+}
+
+// Test: Save and load birthdays with encryption
+TEST_F(BPlusTreeTest, SaveBirthdays) {
+    const char* filename = "test_birthdays.data";
+
+    // Add a pet and insert a birthday
+    addPet(&petList, "Buddy", "Dog", 3, "John");
+    insertBirthday(tree, "Buddy", 5, 10, 2020);
+
+    // Save to file
+    saveBirthdaysToFile(tree, filename, petList);
+
+    // Check that the file exists and is non-empty
+    FILE* file = fopen(filename, "rb");
+    ASSERT_NE(file, nullptr); // File should exist
+    fseek(file, 0, SEEK_END);
+    long fileSize = ftell(file);
+    fclose(file);
+
+    EXPECT_GT(fileSize, 0); // File should not be empty
+
+    // Clean up
+    std::remove(filename);
+}
+
+TEST_F(BPlusTreeTest, LoadBirthdays) {
+    const char* filename = "test_birthdays.data";
+
+    // Manually create and save a test file
+    addPet(&petList, "Buddy", "Dog", 3, "John");
+    insertBirthday(tree, "Buddy", 5, 10, 2020);
+    saveBirthdaysToFile(tree, filename, petList);
+
+    // Load from file
+    BPlusTree* loadedTree = createBPlusTree();
+    Pet* loadedPetList = NULL;
+    loadBirthdaysFromFile(loadedTree, filename, &loadedPetList);
+
+    // Verify loaded B+ tree and pet list
+    ASSERT_NE(loadedTree->root, nullptr);  // Ensure root is not NULL
+    EXPECT_EQ(loadedTree->root->keys[0], hashFunction("Buddy"));
+    EXPECT_EQ(loadedTree->root->values[0], 20201005); // Encoded as YYYYMMDD
+
+    EXPECT_TRUE(isPetOwnedByUser(loadedPetList, "Buddy", "John"));
+
+    // Clean up
+    freePetList(loadedPetList);
+    delete loadedTree;
+    std::remove(filename);
+}
 
 
 
+// Test: SaveBPlusTreeToFile and LoadBirthdaysFromFile encryption
+TEST_F(BPlusTreeTest, EncryptionTest) {
+    const char* filename = "test_encrypted_birthdays.data";
+
+    // Add a pet and insert a birthday
+    addPet(&petList, "Buddy", "Dog", 3, "John");
+    insertBirthday(tree, "Buddy", 15, 8, 2022);
+
+    // Save to file
+    saveBirthdaysToFile(tree, filename, petList);
+
+    // Open file and verify it's encrypted
+    FILE* file = fopen(filename, "rb");
+    ASSERT_NE(file, nullptr);
+    char encryptedData[50];
+    fread(encryptedData, sizeof(char), 50, file);
+    fclose(file);
+
+    // Verify that encrypted data doesn't match plain text
+    EXPECT_STRNE(encryptedData, "Buddy");
+
+    // Clean up
+    std::remove(filename);
+}

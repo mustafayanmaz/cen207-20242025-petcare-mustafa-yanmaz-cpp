@@ -912,7 +912,7 @@ void saveBPlusTreeToFile(BPlusNode* node, FILE* file, Pet* petList) {
 
 
 // Load birthdays from file
-/*void loadBirthdaysFromFile(BPlusTree* birthdayTree, const char* filename, Pet** petList) {
+void loadBirthdaysFromFile(BPlusTree* birthdayTree, const char* filename, Pet** petList) {
     FILE* file = fopen(filename, "rb");
     if (!file) {
         perror("Error opening birthdays file");
@@ -962,7 +962,7 @@ void saveBPlusTreeToFile(BPlusNode* node, FILE* file, Pet* petList) {
     fclose(file);
     printf("Birthdays loaded successfully from %s.\n", filename);
 }
-*/
+
 
 // Find a pet by name
 Pet* findPetByName(Pet* petList, int key) {
