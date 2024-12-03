@@ -8,7 +8,7 @@ on:
     #branches:
     #  - main
     tags:
-      - 'v*'
+      - "v*"
   pull_request:
     branches:
       - main
@@ -25,7 +25,7 @@ jobs:
       fail-fast: true
       max-parallel: 1
       matrix:
-        config: 
+        config:
         - {
             name: "Windows Latest MSVC (C++11)",
             os: windows-latest,
@@ -38,7 +38,7 @@ jobs:
             generators: "Visual Studio 17 2022",
             active: false,
             testcoverage: true,
-            doccoverage: true
+            doccoverage: true,
           }
         - {
             name: "Windows Latest MSVC (C++17)",
@@ -52,7 +52,7 @@ jobs:
             generators: "Visual Studio 17 2022",
             active: false,
             testcoverage: true,
-            doccoverage: true
+            doccoverage: true,
           }
         - {
             name: "Windows Latest MinGW (C++11)",
@@ -65,7 +65,7 @@ jobs:
             generators: "Ninja",
             active: false,
             testcoverage: false,
-            doccoverage: true
+            doccoverage: true,
           }
         - {
             name: "Windows Latest MinGW (C++17)",
@@ -78,7 +78,7 @@ jobs:
             generators: "Ninja",
             active: false,
             testcoverage: false,
-            doccoverage: true
+            doccoverage: true,
           }
         - {
             name: "Ubuntu_Latest_GCC (C++11)",
@@ -91,7 +91,7 @@ jobs:
             generators: "Ninja",
             active: false,
             testcoverage: true,
-            doccoverage: true
+            doccoverage: true,
           }
         - {
             name: "Ubuntu_Latest_GCC (C++17)",
@@ -104,7 +104,7 @@ jobs:
             generators: "Ninja",
             active: false,
             testcoverage: true,
-            doccoverage: true
+            doccoverage: true,
           }
         - {
             name: "Ubuntu_GCC_9 (C++11)",
@@ -117,7 +117,7 @@ jobs:
             generators: "Ninja",
             active: false,
             testcoverage: true,
-            doccoverage: true
+            doccoverage: true,
           }
         - {
             name: "Ubuntu_GCC_9 (C++17)",
@@ -130,7 +130,7 @@ jobs:
             generators: "Ninja",
             active: false,
             testcoverage: true,
-            doccoverage: true
+            doccoverage: true,
           }
         - {
             name: "macOS Latest Clang (C++11)",
@@ -143,7 +143,7 @@ jobs:
             generators: "Xcode",
             active: false,
             testcoverage: true,
-            doccoverage: true
+            doccoverage: true,
           }
         - {
             name: "macOS Latest Clang (C++17)",
@@ -154,9 +154,9 @@ jobs:
             cxx: "clang++",
             archiver: "tar -czvf",
             generators: "Xcode",
-            active: true,
+            active: false,
             testcoverage: true,
-            doccoverage: true
+            doccoverage: true,
           }
     steps:
       # Checks-out repository with sub-modules to $GITHUB_WORKSPACE, so your job can access it
@@ -203,7 +203,7 @@ jobs:
 
       # -------------------------------------------------------
       - name: Clean Generated Folder and Files on Ubuntu/MacOS
-        if: (startsWith(matrix.config.os, 'ubuntu') || startsWith(matrix.config.os, 'macos')) && matrix.config.active == true 
+        if: (startsWith(matrix.config.os, 'ubuntu') || startsWith(matrix.config.os, 'macos')) && matrix.config.active == true
         shell: bash
         run: |
             if [ -d "release" ]; then
@@ -552,49 +552,49 @@ jobs:
   
       - name: Create Web Site Artifact
         if: matrix.config.active == true
-        uses: actions/upload-artifact@v2
+        uses: actions/upload-artifact@v4.4.3
         with:
             name: ${{ matrix.config.artifact }}_web.tar.gz
             path: release/${{ matrix.config.artifact }}_web.tar.gz
 
       - name: Create Publish Artifact
         if: matrix.config.active == true
-        uses: actions/upload-artifact@v2
+        uses: actions/upload-artifact@v4.4.3
         with:
             name: ${{ matrix.config.artifact }}_pub.tar.gz
             path: release/${{ matrix.config.artifact }}_pub.tar.gz
 
       - name: Create Binary Release Artifact
         if: matrix.config.active == true
-        uses: actions/upload-artifact@v2
+        uses: actions/upload-artifact@v4.4.3
         with:
             name: ${{ matrix.config.artifact }}_bin_release.tar.gz
             path: release/${{ matrix.config.artifact }}_bin_release.tar.gz
 
       - name: Create Binary Debug Artifact
         if: matrix.config.active == true
-        uses: actions/upload-artifact@v2
+        uses: actions/upload-artifact@v4.4.3
         with:
             name: ${{ matrix.config.artifact }}_bin_debug.tar.gz
             path: release/${{ matrix.config.artifact }}_bin_debug.tar.gz
 
       - name: Create Document Coverate Report Artifact
         if: matrix.config.active == true && matrix.config.doccoverage == true
-        uses: actions/upload-artifact@v2
+        uses: actions/upload-artifact@v4.4.3
         with:
              name: ${{ matrix.config.artifact }}_dxy.tar.gz
              path: release/${{ matrix.config.artifact }}_dxy.tar.gz
 
       - name: Create Unit Test Coverage Report Artifact
         if: matrix.config.active == true && matrix.config.testcoverage == true
-        uses: actions/upload-artifact@v2
+        uses: actions/upload-artifact@v4.4.3
         with:
              name: ${{ matrix.config.artifact }}_tst.tar.gz
              path: release/${{ matrix.config.artifact }}_tst.tar.gz
 
       - name: Create Doxygen Output Artifact
         if: matrix.config.active == true
-        uses: actions/upload-artifact@v2
+        uses: actions/upload-artifact@v4.4.3
         with:
              name: ${{ matrix.config.artifact }}_doc.tar.gz
              path: release/${{ matrix.config.artifact }}_doc.tar.gz
@@ -619,7 +619,7 @@ jobs:
         id: create_release
         uses: actions/create-release@v1
         env:
-          GITHUB_TOKEN: ${{ secrets.CMAKE_CPP_TEMPLATE_TOKEN }}
+          GITHUB_TOKEN: ${{ secrets.CE205_ALI_MUSTAFA_ONUR_OMER_TOKEN}}
         with:
           tag_name: ${{ github.ref }}
           release_name: Release ${{ github.ref }}
@@ -627,7 +627,7 @@ jobs:
             Changes in this release:
             ${{ steps.commit_summary.outputs.summary }}
 
-            Dr. Ugur CORUH
+            Ali / Onur / Mustafa / Omer
           draft: false
           prerelease: false
 
@@ -660,7 +660,7 @@ jobs:
               generators: "Visual Studio 17 2022",
               active: false,
               testcoverage: true,
-              doccoverage: true
+              doccoverage: true,
             }
           - {
               name: "Windows Latest MSVC (C++17)",
@@ -674,7 +674,7 @@ jobs:
               generators: "Visual Studio 17 2022",
               active: false,
               testcoverage: true,
-              doccoverage: true
+              doccoverage: true,
             }
           - {
               name: "Windows Latest MinGW (C++11)",
@@ -687,7 +687,7 @@ jobs:
               generators: "Ninja",
               active: false,
               testcoverage: false,
-              doccoverage: true
+              doccoverage: true,
             }
           - {
               name: "Windows Latest MinGW (C++17)",
@@ -700,7 +700,7 @@ jobs:
               generators: "Ninja",
               active: false,
               testcoverage: false,
-              doccoverage: true
+              doccoverage: true,
             }
           - {
               name: "Ubuntu_Latest_GCC (C++11)",
@@ -713,7 +713,7 @@ jobs:
               generators: "Ninja",
               active: false,
               testcoverage: true,
-              doccoverage: true
+              doccoverage: true,
             }
           - {
               name: "Ubuntu_Latest_GCC (C++17)",
@@ -726,7 +726,7 @@ jobs:
               generators: "Ninja",
               active: false,
               testcoverage: true,
-              doccoverage: true
+              doccoverage: true,
             }
           - {
               name: "Ubuntu_GCC_9 (C++11)",
@@ -739,7 +739,7 @@ jobs:
               generators: "Ninja",
               active: false,
               testcoverage: true,
-              doccoverage: true
+              doccoverage: true,
             }
           - {
               name: "Ubuntu_GCC_9 (C++17)",
@@ -752,7 +752,7 @@ jobs:
               generators: "Ninja",
               active: false,
               testcoverage: true,
-              doccoverage: true
+              doccoverage: true,
             }
           - {
               name: "macOS Latest Clang (C++11)",
@@ -765,20 +765,7 @@ jobs:
               generators: "Xcode",
               active: false,
               testcoverage: true,
-              doccoverage: true
-            }
-          - {
-              name: "macOS Latest Clang (C++17)",
-              os: macos-latest,
-              artifact: "macos_clang_c17",
-              build_type: "Release",
-              cc: "clang",
-              cxx: "clang++",
-              archiver: "tar -czvf",
-              generators: "Xcode",
-              active: true,
-              testcoverage: true,
-              doccoverage: true
+              doccoverage: true,
             }
     steps:
       # Checks-out your repository under $GITHUB_WORKSPACE, so your job can access it
@@ -791,49 +778,49 @@ jobs:
 
       - name: Download Web Site Artifact
         if: matrix.config.active == true
-        uses: actions/download-artifact@v2
+        uses: actions/download-artifact@v4.1.8
         with:
           name: ${{ matrix.config.artifact }}_web.tar.gz
           path: release/${{ matrix.config.artifact }}_web.tar.gz
 
       - name: Download Publish Artifact
         if: matrix.config.active == true
-        uses: actions/download-artifact@v2
+        uses: actions/download-artifact@v4.1.8
         with:
           name: ${{ matrix.config.artifact }}_pub.tar.gz
           path: release/${{ matrix.config.artifact }}_pub.tar.gz
 
       - name: Download Binary Release Artifact
         if: matrix.config.active == true
-        uses: actions/download-artifact@v2
+        uses: actions/download-artifact@v4.1.8
         with:
           name: ${{ matrix.config.artifact }}_bin_release.tar.gz
           path: release/${{ matrix.config.artifact }}_bin_release.tar.gz
 
       - name: Download Binary Debug Artifact
         if: matrix.config.active == true
-        uses: actions/download-artifact@v2
+        uses: actions/download-artifact@v4.1.8
         with:
           name: ${{ matrix.config.artifact }}_bin_debug.tar.gz
           path: release/${{ matrix.config.artifact }}_bin_debug.tar.gz
 
       - name: Download Document Coverate Report Artifact
         if: matrix.config.active == true  && matrix.config.doccoverage == true
-        uses: actions/download-artifact@v2
+        uses: actions/download-artifact@v4.1.8
         with:
           name: ${{ matrix.config.artifact }}_dxy.tar.gz
           path: release/${{ matrix.config.artifact }}_dxy.tar.gz
 
       - name: Download Unit Test Coverage Report Artifact
         if: matrix.config.active == true && matrix.config.testcoverage == true
-        uses: actions/download-artifact@v2
+        uses: actions/download-artifact@v4.1.8
         with:
           name: ${{ matrix.config.artifact }}_tst.tar.gz
           path: release/${{ matrix.config.artifact }}_tst.tar.gz
 
       - name: Download Doxygen Output Artifact
         if: matrix.config.active == true
-        uses: actions/download-artifact@v2
+        uses: actions/download-artifact@v4.1.8
         with:
           name: ${{ matrix.config.artifact }}_doc.tar.gz
           path: release/${{ matrix.config.artifact }}_doc.tar.gz
@@ -844,7 +831,7 @@ jobs:
         if: matrix.config.active == true
         uses: actions/upload-release-asset@v1
         env:
-          GITHUB_TOKEN: ${{ secrets.CMAKE_CPP_TEMPLATE_TOKEN }}
+          GITHUB_TOKEN: ${{ secrets.CE205_ALI_MUSTAFA_ONUR_OMER_TOKEN}}
         with:
           upload_url: ${{ needs.create_release.outputs.upload_url }}
           asset_path: release/${{ matrix.config.artifact }}_web.tar.gz
@@ -855,7 +842,7 @@ jobs:
         if: matrix.config.active == true
         uses: actions/upload-release-asset@v1
         env:
-          GITHUB_TOKEN: ${{ secrets.CMAKE_CPP_TEMPLATE_TOKEN }}
+          GITHUB_TOKEN: ${{ secrets.CE205_ALI_MUSTAFA_ONUR_OMER_TOKEN}}
         with:
           upload_url: ${{ needs.create_release.outputs.upload_url }}
           asset_path: release/${{ matrix.config.artifact }}_pub.tar.gz
@@ -866,7 +853,7 @@ jobs:
         if: matrix.config.active == true
         uses: actions/upload-release-asset@v1
         env:
-          GITHUB_TOKEN: ${{ secrets.CMAKE_CPP_TEMPLATE_TOKEN }}
+          GITHUB_TOKEN: ${{ secrets.CE205_ALI_MUSTAFA_ONUR_OMER_TOKEN}}
         with:
           upload_url: ${{ needs.create_release.outputs.upload_url }}
           asset_path: release/${{ matrix.config.artifact }}_bin_release.tar.gz
@@ -877,7 +864,7 @@ jobs:
         if: matrix.config.active == true
         uses: actions/upload-release-asset@v1
         env:
-          GITHUB_TOKEN: ${{ secrets.CMAKE_CPP_TEMPLATE_TOKEN }}
+          GITHUB_TOKEN: ${{ secrets.CE205_ALI_MUSTAFA_ONUR_OMER_TOKEN}}
         with:
           upload_url: ${{ needs.create_release.outputs.upload_url }}
           asset_path: release/${{ matrix.config.artifact }}_bin_debug.tar.gz
@@ -888,7 +875,7 @@ jobs:
         if: matrix.config.active == true && matrix.config.doccoverage == true
         uses: actions/upload-release-asset@v1
         env:
-          GITHUB_TOKEN: ${{ secrets.CMAKE_CPP_TEMPLATE_TOKEN }}
+          GITHUB_TOKEN: ${{ secrets.CE205_ALI_MUSTAFA_ONUR_OMER_TOKEN}}
         with:
           upload_url: ${{ needs.create_release.outputs.upload_url }}
           asset_path: release/${{ matrix.config.artifact }}_dxy.tar.gz
@@ -899,7 +886,7 @@ jobs:
         if: matrix.config.active == true && matrix.config.testcoverage == true
         uses: actions/upload-release-asset@v1
         env:
-          GITHUB_TOKEN: ${{ secrets.CMAKE_CPP_TEMPLATE_TOKEN }}
+          GITHUB_TOKEN: ${{ secrets.CE205_ALI_MUSTAFA_ONUR_OMER_TOKEN}}
         with:
           upload_url: ${{ needs.create_release.outputs.upload_url }}
           asset_path: release/${{ matrix.config.artifact }}_tst.tar.gz
@@ -910,7 +897,7 @@ jobs:
         if: matrix.config.active == true
         uses: actions/upload-release-asset@v1
         env:
-          GITHUB_TOKEN: ${{ secrets.CMAKE_CPP_TEMPLATE_TOKEN }}
+          GITHUB_TOKEN: ${{ secrets.CE205_ALI_MUSTAFA_ONUR_OMER_TOKEN}}
         with:
           upload_url: ${{ needs.create_release.outputs.upload_url }}
           asset_path: release/${{ matrix.config.artifact }}_doc.tar.gz
