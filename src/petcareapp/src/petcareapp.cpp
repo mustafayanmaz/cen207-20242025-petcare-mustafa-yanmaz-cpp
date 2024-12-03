@@ -508,7 +508,7 @@ void navigateMainMenu(Menu * mainMenu, HashTable * userTable, int* isAuthenticat
             else if (strcmp(mainMenu->items[selectedIndex], "Pet Birthday and Adoption Anniversary") == 0) {
                 navigateAdaptationMenu(mainMenu->subMenus[4], petList);
             }
-            //COMMENT GAY ALİ
+            
             else if (strcmp(mainMenu->items[selectedIndex], "Exit") == 0) {
                 CLEAR_SCREEN();
                 printf("Exiting program...\n");
@@ -534,10 +534,11 @@ int main() {
     // Menü elemanları
     char* authItems[] = { "Login", "Register", "Guest Mode", "Exit" };
     char* petItems[] = { "Add Pet", "Update Pet", "Delete", "List All Pets", "Search By Name or Type", "Back" };
-    char* feedingItems[] = { "Manage Feeding Schedule", "Manage Medication Reminders", "Back" };
+    char* feedingItems[] = { "Add Feeding Schedule","Update Feeding Schedule","Cancel Feeding Schedule", "View Feeding Schedule List","------------------------------------------","Add Medicine Schedule","Update Medicine Schedule","Cancel Medicine Schedule", "View Medicine Schedule List", "Back" };
     char* vetItems[] = { "Add Appointment","Update Appointment","Cancel Appointment", "View Appointments List", "Back" };
-    char* exerciseItems[] = { "Set Exercise Routine", "Set Grooming Schedule", "Back" };
-    char* birthdayItems[] = { "Record Pet Birthday", "Record Adoption Anniversary", "Back" };
+    char* exerciseItems[] = { "Add Exercise Routine","List Exercises","------------------------------------------", "Set Grooming Schedule","Update Grooming Schedule","Delete Grooming Schedule", "View Exercise and Grooming Schedules", "Back" };
+    char* birthdayItems[] = { "Record Pet Birthday", "------------------------------------------","Add stray animals","Update stray animals","Delete stray animals","Search stray animals ","Adopt stray animals" ,"Back" };
+
     char* mainMenuItems[] = {
         "Manage Pets",
         "Veterinary Appointment Tracking",
@@ -550,10 +551,10 @@ int main() {
     // Menü yapıları
     Menu authMenu = { "User Authentication", NULL, authItems, 4, NULL };
     Menu petsMenu = { "Manage Pets", NULL, petItems, 6, NULL };
-    Menu feedingMenu = { "Feeding and Medication Schedules", NULL, feedingItems, 3, NULL };
+    Menu feedingMenu = { "Feeding and Medication Schedules", NULL, feedingItems, 10, NULL };
     Menu vetMenu = { "Veterinary Appointment Tracking", NULL, vetItems, 5, NULL };
-    Menu exerciseMenu = { "Pet Exercise and Grooming Reminders", NULL, exerciseItems, 3, NULL };
-    Menu birthdayMenu = { "Pet Birthday and Adoption Anniversary", NULL, birthdayItems, 3, NULL };
+    Menu exerciseMenu = { "Pet Exercise and Grooming Reminders", NULL, exerciseItems, 9, NULL };
+    Menu birthdayMenu = { "Pet Birthday and Adoption Anniversary", NULL, birthdayItems, 8, NULL };
 
     // Ana menü ve alt menüler
     Menu* mainSubMenus[] = { &petsMenu, &vetMenu, &feedingMenu, &exerciseMenu, &birthdayMenu, NULL };
