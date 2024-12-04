@@ -46,6 +46,24 @@ void savePetsToFile(Pet* petList, const char* filename);
 void loadPetsFromFile(Pet** petList, const char* filename);
 void freePetList(Pet* petList);
 
+// Feeding Schedule İşlev Prototipleri
+void addFeedingSchedule(const char* petName, const char* scheduleDetails, Pet* petList);
+void updateFeedingSchedule(const char* petName, const char* newDetails, Pet* petList);
+void deleteFeedingSchedule(const char* petName, Pet* petList);
+void viewFeedingSchedules(Pet* petList);
+
+// Medicine Schedule İşlev Prototipleri
+void addMedicineSchedule(const char* petName, const char* scheduleDetails, Pet* petList);
+void updateMedicineSchedule(const char* petName, const char* newDetails, Pet* petList);
+void deleteMedicineSchedule(const char* petName, Pet* petList);
+void viewMedicineSchedules(Pet* petList);
+
+// Feeding and Medicine Schedules File Operations
+void saveFeedingSchedulesToFile();
+void loadFeedingSchedulesFromFile();
+void saveMedicineSchedulesToFile();
+void loadMedicineSchedulesFromFile();
+
 
 // PetInfo yapısı (Heap Sort için kullanılıyor)
 typedef struct PetInfo {
@@ -89,6 +107,42 @@ void viewAppointments(int month);
 void saveAppointmentsToFile();
 void loadAppointmentsFromFile();
 
+
+// Feeding Schedule için Queue tanımları
+typedef struct FeedingSchedule {
+    char petName[50];
+    char scheduleDetails[100];
+    struct FeedingSchedule* next;
+} FeedingSchedule;
+
+typedef struct Queue {
+    FeedingSchedule* front;
+    FeedingSchedule* rear;
+} Queue;
+
+//Global feedingschedule bildirimi
+extern Queue* feedingQueue;
+// Global medicineQueue bildirimi
+extern Queue* medicineQueue;
+
+// Queue işlemleri
+Queue* createQueue();
+void enqueue(Queue* queue, const char* petName, const char* scheduleDetails);
+FeedingSchedule* dequeue(Queue* queue);
+int isQueueEmpty(Queue* queue);
+
+// Feeding Schedule işlevleri
+void addFeedingSchedule(Queue* feedingQueue);
+void updateFeedingSchedule(Queue* feedingQueue, const char* petName, const char* newDetails);
+void deleteFeedingSchedule(Queue* feedingQueue, const char* petName);
+void viewFeedingSchedules(Queue* feedingQueue);
+
+//Medicine schedule işlevleri
+void addMedicineSchedule(Queue* medicineQueue, const char* petName, const char* scheduleDetails);
+void updateMedicineSchedule(Queue* medicineQueue, const char* petName, const char* newDetails);
+void deleteMedicineSchedule(Queue* medicineQueue, const char* petName);
+void viewMedicineSchedules(Queue* medicineQueue);
+void findSCC();
 
 // B+ Tree Node
 typedef struct BPlusNode {
