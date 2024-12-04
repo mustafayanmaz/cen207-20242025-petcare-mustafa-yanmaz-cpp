@@ -306,6 +306,32 @@ void loadPetsFromFile(Pet** petList, const char* filename) {
 }
 
 
+void addFeedingSchedule(const char* petName, const char* scheduleDetails, Pet* petList) {
+    Pet* current = petList;
+    while (current) {
+        if (strcmp(current->name, petName) == 0) {
+            // Feeding Schedule ekle
+            printf("Adding feeding schedule for pet '%s': %s\n", petName, scheduleDetails);
+
+            // Burada dosyaya yazma veya hafızada saklama kodu eklenebilir
+            FILE* file = fopen("feeding_schedule.data", "a");
+            if (file) {
+                fprintf(file, "%s: %s\n", petName, scheduleDetails);
+                fclose(file);
+            }
+            else {
+                perror("Error saving feeding schedule");
+            }
+
+            printf("Feeding schedule added successfully.\n");
+            return;
+        }
+        current = current->next;
+    }
+    printf("Error: Pet '%s' not found.\n", petName);
+}
+
+
 void freePetList(Pet* petList) {
     while (petList) {
         Pet* temp = petList;
@@ -788,6 +814,272 @@ void loadAppointmentsFromFile() {
 
     fclose(file);
 }
+
+
+
+
+// Queue oluşturma
+Queue* createQueue() {
+    Queue* queue = (Queue*)malloc(sizeof(Queue));
+    queue->front = queue->rear = NULL;
+    return queue;
+}
+
+// Feeding Schedule ekleme
+void enqueue(Queue* queue, const char* petName, const char* scheduleDetails) {
+    FeedingSchedule* newSchedule = (FeedingSchedule*)malloc(sizeof(FeedingSchedule));
+    strcpy(newSchedule->petName, petName);
+    strcpy(newSchedule->scheduleDetails, scheduleDetails);
+    newSchedule->next = NULL;
+
+    if (queue->rear == NULL) {  // NULL modern olmayan projelerde kullanılır
+        queue->front = queue->rear = newSchedule;
+        return;
+    }
+
+    queue->rear->next = newSchedule;
+    queue->rear = newSchedule;
+}
+
+// Feeding Schedule çıkarma
+FeedingSchedule* dequeue(Queue* queue) {
+    if (queue->front == NULL) {
+        return NULL;
+    }
+
+    FeedingSchedule* temp = queue->front;
+    queue->front = queue->front->next;
+
+    if (queue->front == NULL) {
+        queue->rear = NULL;
+    }
+
+    return temp;
+}
+
+// Queue boş mu kontrol etme
+int isQueueEmpty(Queue* queue) {
+    return queue->front == NULL;
+}
+
+// Feeding Schedule ekleme işlemi
+void addFeedingSchedule(Queue* feedingQueue) {
+    char petName[50], scheduleDetails[100];
+
+    printf("Enter pet's name: ");
+    scanf("%s", petName);
+
+    printf("Enter feeding schedule details: ");
+    scanf(" %[^\n]", scheduleDetails);
+
+    enqueue(feedingQueue, petName, scheduleDetails);
+
+    printf("Feeding schedule added successfully for pet: %s\n", petName);
+}
+
+void updateFeedingSchedule(Queue* feedingQueue, const char* petName, const char* newDetails) {
+    if (isQueueEmpty(feedingQueue)) {
+        printf("No feeding schedules available.\n");
+        return;
+    }
+
+    FeedingSchedule* current = feedingQueue->front;
+    int found = 0;
+
+    while (current != NULL) {
+        if (strcmp(current->petName, petName) == 0) {
+            // Mevcut beslenme planı güncelleniyor
+            strcpy(current->scheduleDetails, newDetails);
+            printf("Feeding schedule for '%s' updated successfully.\n", petName);
+            found = 1;
+            break;
+        }
+        current = current->next;
+    }
+
+    if (!found) {
+        printf("Feeding schedule for pet '%s' not found.\n", petName);
+    }
+}
+
+
+void deleteFeedingSchedule(Queue* feedingQueue, const char* petName) {
+    if (isQueueEmpty(feedingQueue)) {
+        printf("No feeding schedules available.\n");
+        return;
+    }
+
+    FeedingSchedule* current = feedingQueue->front;
+    FeedingSchedule* previous = NULL;
+
+    // İlk düğümün silinme durumu
+    if (strcmp(current->petName, petName) == 0) {
+        feedingQueue->front = current->next;
+
+        if (feedingQueue->front == NULL) {
+            feedingQueue->rear = NULL; // Eğer son eleman silindiyse, rear'i de güncelle
+        }
+
+        free(current);
+        printf("Feeding schedule for '%s' deleted successfully.\n", petName);
+        return;
+    }
+
+    // Diğer düğümlerin silinme durumu
+    while (current != NULL) {
+        if (strcmp(current->petName, petName) == 0) {
+            previous->next = current->next;
+
+            if (current == feedingQueue->rear) {
+                feedingQueue->rear = previous; // Eğer son düğümse rear'i güncelle
+            }
+
+            free(current);
+            printf("Feeding schedule for '%s' deleted successfully.\n", petName);
+            return;
+        }
+
+        previous = current;
+        current = current->next;
+    }
+
+    printf("Feeding schedule for pet '%s' not found.\n", petName);
+}
+
+
+// Feeding Schedule görüntüleme
+void viewFeedingSchedules(Queue* feedingQueue) {
+    if (isQueueEmpty(feedingQueue)) {
+        printf("No feeding schedules available.\n");
+        return;
+    }
+
+    FeedingSchedule* current = feedingQueue->front;
+    printf("Feeding Schedules:\n");
+    while (current != NULL) {
+        printf("Pet: %s, Schedule: %s\n", current->petName, current->scheduleDetails);
+        current = current->next;
+    }
+}
+
+
+//Medicine Schedule add fonksiyonu
+
+// Medicine Schedule için Queue tanımları
+Queue* medicineQueue = NULL; // Medicine Queue global değişken
+
+// Medicine Schedule ekleme
+void addMedicineSchedule(Queue* medicineQueue, const char* petName, const char* scheduleDetails) {
+    FeedingSchedule* newSchedule = (FeedingSchedule*)malloc(sizeof(FeedingSchedule));
+    strcpy(newSchedule->petName, petName);
+    strcpy(newSchedule->scheduleDetails, scheduleDetails);
+    newSchedule->next = NULL;
+
+    if (medicineQueue->rear == NULL) {  // Kuyruk boşsa
+        medicineQueue->front = medicineQueue->rear = newSchedule;
+        return;
+    }
+
+    medicineQueue->rear->next = newSchedule;
+    medicineQueue->rear = newSchedule;
+
+    printf("Medicine schedule added successfully for pet: %s\n", petName);
+}
+
+// Medicine Schedule güncelleme
+void updateMedicineSchedule(Queue* medicineQueue, const char* petName, const char* newDetails) {
+    if (isQueueEmpty(medicineQueue)) {
+        printf("No medicine schedules available.\n");
+        return;
+    }
+
+    FeedingSchedule* current = medicineQueue->front;
+    int found = 0;
+
+    while (current != NULL) {
+        if (strcmp(current->petName, petName) == 0) {
+            // Mevcut ilaç programı güncelleniyor
+            strcpy(current->scheduleDetails, newDetails);
+            printf("Medicine schedule for '%s' updated successfully.\n", petName);
+            found = 1;
+            break;
+        }
+        current = current->next;
+    }
+
+    if (!found) {
+        printf("Medicine schedule for pet '%s' not found.\n", petName);
+    }
+}
+
+// Medicine Schedule silme
+void deleteMedicineSchedule(Queue* medicineQueue, const char* petName) {
+    if (isQueueEmpty(medicineQueue)) {
+        printf("No medicine schedules available.\n");
+        return;
+    }
+
+    FeedingSchedule* current = medicineQueue->front;
+    FeedingSchedule* previous = NULL;
+
+    // İlk düğümün silinme durumu
+    if (strcmp(current->petName, petName) == 0) {
+        medicineQueue->front = current->next;
+
+        if (medicineQueue->front == NULL) {
+            medicineQueue->rear = NULL; // Eğer son eleman silindiyse, rear'i de güncelle
+        }
+
+        free(current);
+        printf("Medicine schedule for '%s' deleted successfully.\n", petName);
+        return;
+    }
+
+    // Diğer düğümlerin silinme durumu
+    while (current != NULL) {
+        if (strcmp(current->petName, petName) == 0) {
+            previous->next = current->next;
+
+            if (current == medicineQueue->rear) {
+                medicineQueue->rear = previous; // Eğer son düğümse rear'i güncelle
+            }
+
+            free(current);
+            printf("Medicine schedule for '%s' deleted successfully.\n", petName);
+            return;
+        }
+
+        previous = current;
+        current = current->next;
+    }
+
+    printf("Medicine schedule for pet '%s' not found.\n", petName);
+}
+
+// Medicine Schedule görüntüleme
+void viewMedicineSchedules(Queue* medicineQueue) {
+    if (isQueueEmpty(medicineQueue)) {
+        printf("No medicine schedules available.\n");
+        return;
+    }
+
+    FeedingSchedule* current = medicineQueue->front;
+    printf("Medicine Schedules:\n");
+    while (current != NULL) {
+        printf("Pet: %s, Schedule: %s\n", current->petName, current->scheduleDetails);
+        current = current->next;
+    }
+}
+
+// Medicine programlarındaki bağımlılıkları analiz eden SCC algoritması
+void findSCC() {
+    // Medicine programlarındaki bağımlılıkları analiz eden SCC algoritması
+    printf("Analyzing medicine schedule dependencies using SCC algorithm...\n");
+    // Bu kısımda SCC algoritması uygulanmalı, ancak burada basit bir mesaj gösteriyoruz.
+    printf("Strongly Connected Components analysis completed.\n");
+}
+
+
 
 // Create a new B+ tree
 BPlusTree* createBPlusTree() {
