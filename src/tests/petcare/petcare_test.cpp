@@ -891,3 +891,124 @@ TEST(MedicineScheduleTest, FindSCC) {
     EXPECT_NE(output.find("Analyzing medicine schedule dependencies using SCC algorithm..."), std::string::npos);
     EXPECT_NE(output.find("Strongly Connected Components analysis completed."), std::string::npos);
 }
+
+
+
+
+// Test fixture for Queue operations
+class FeedingQueueTest : public ::testing::Test {
+protected:
+    Queue* feedingQueue;
+
+    void SetUp() override {
+        feedingQueue = createQueue(); // Test başlamadan önce boş bir kuyruk oluştur
+    }
+
+    void TearDown() override {
+        // Kuyruk elemanlarını temizle
+        while (!isQueueEmpty(feedingQueue)) {
+            FeedingSchedule* temp = dequeue(feedingQueue);
+            free(temp);
+        }
+        free(feedingQueue);
+    }
+};
+
+// Test: Queue oluşturma
+TEST_F(FeedingQueueTest, CreateQueue) {
+    ASSERT_NE(feedingQueue, nullptr);
+    EXPECT_TRUE(isQueueEmpty(feedingQueue));
+}
+
+// Test: Feeding Schedule ekleme
+TEST_F(FeedingQueueTest, Enqueue) {
+    enqueue(feedingQueue, "Buddy", "Morning Feed");
+    ASSERT_FALSE(isQueueEmpty(feedingQueue));
+
+    EXPECT_STREQ(feedingQueue->front->petName, "Buddy");
+    EXPECT_STREQ(feedingQueue->front->scheduleDetails, "Morning Feed");
+}
+
+// Test: Feeding Schedule çıkarma
+TEST_F(FeedingQueueTest, Dequeue) {
+    enqueue(feedingQueue, "Buddy", "Morning Feed");
+    enqueue(feedingQueue, "Kitty", "Evening Feed");
+
+    FeedingSchedule* removed = dequeue(feedingQueue);
+    ASSERT_NE(removed, nullptr);
+
+    EXPECT_STREQ(removed->petName, "Buddy");
+    EXPECT_STREQ(removed->scheduleDetails, "Morning Feed");
+
+    free(removed); // Çıkarılan elemanı serbest bırak
+    EXPECT_FALSE(isQueueEmpty(feedingQueue));
+    EXPECT_STREQ(feedingQueue->front->petName, "Kitty");
+}
+
+// Test: Queue boş mu kontrol etme
+TEST_F(FeedingQueueTest, IsQueueEmpty) {
+    EXPECT_TRUE(isQueueEmpty(feedingQueue));
+
+    enqueue(feedingQueue, "Buddy", "Morning Feed");
+    EXPECT_FALSE(isQueueEmpty(feedingQueue));
+}
+
+// Test: Feeding Schedule güncelleme
+TEST_F(FeedingQueueTest, UpdateFeedingSchedule) {
+    enqueue(feedingQueue, "Buddy", "Morning Feed");
+
+    updateFeedingSchedule(feedingQueue, "Buddy", "Evening Feed");
+    EXPECT_STREQ(feedingQueue->front->scheduleDetails, "Evening Feed");
+}
+
+// Test: Feeding Schedule güncelleme (Hatalı isim)
+TEST_F(FeedingQueueTest, UpdateFeedingSchedule_NotFound) {
+    enqueue(feedingQueue, "Buddy", "Morning Feed");
+
+    testing::internal::CaptureStdout();
+    updateFeedingSchedule(feedingQueue, "Nonexistent", "Evening Feed");
+    std::string output = testing::internal::GetCapturedStdout();
+
+    EXPECT_NE(output.find("Feeding schedule for pet 'Nonexistent' not found."), std::string::npos);
+}
+
+// Test: Feeding Schedule silme
+TEST_F(FeedingQueueTest, DeleteFeedingSchedule) {
+    enqueue(feedingQueue, "Buddy", "Morning Feed");
+
+    deleteFeedingSchedule(feedingQueue, "Buddy");
+    EXPECT_TRUE(isQueueEmpty(feedingQueue));
+}
+
+// Test: Feeding Schedule silme (Hatalı isim)
+TEST_F(FeedingQueueTest, DeleteFeedingSchedule_NotFound) {
+    enqueue(feedingQueue, "Buddy", "Morning Feed");
+
+    testing::internal::CaptureStdout();
+    deleteFeedingSchedule(feedingQueue, "Nonexistent");
+    std::string output = testing::internal::GetCapturedStdout();
+
+    EXPECT_NE(output.find("Feeding schedule for pet 'Nonexistent' not found."), std::string::npos);
+}
+
+// Test: Feeding Schedule görüntüleme
+TEST_F(FeedingQueueTest, ViewFeedingSchedules) {
+    enqueue(feedingQueue, "Buddy", "Morning Feed");
+    enqueue(feedingQueue, "Kitty", "Evening Feed");
+
+    testing::internal::CaptureStdout();
+    viewFeedingSchedules(feedingQueue);
+    std::string output = testing::internal::GetCapturedStdout();
+
+    EXPECT_NE(output.find("Pet: Buddy, Schedule: Morning Feed"), std::string::npos);
+    EXPECT_NE(output.find("Pet: Kitty, Schedule: Evening Feed"), std::string::npos);
+}
+
+// Test: Feeding Schedule görüntüleme (Boş kuyruk)
+TEST_F(FeedingQueueTest, ViewFeedingSchedules_EmptyQueue) {
+    testing::internal::CaptureStdout();
+    viewFeedingSchedules(feedingQueue);
+    std::string output = testing::internal::GetCapturedStdout();
+
+    EXPECT_NE(output.find("No feeding schedules available."), std::string::npos);
+}
