@@ -629,20 +629,42 @@ void navigateVetMenu(Menu * vetMenu, const char* activeUser, Pet * petList) {
             else if (key == '\n') { // ENTER
 #endif
                 if (strcmp(exerciseMenu->items[selectedIndex], "Add Exercise Routine") == 0) {
-                 
+                    CLEAR_SCREEN();
+                    char petName[50], exercise[100];
+                    printf("Enter pet's name: ");
+                    scanf("%s", petName);
+
+                    if (!isPetOwnedByUser(petList, petName, activeUser)) {
+                        printf("Error: Pet not found or does not belong to you.\n");
+                        getch();
+                        continue;
+                    }
+
+                    printf("Enter exercise routine: ");
+                    scanf(" %99[^\n]", exercise);
+
+                    addExerciseRoutine(petName, exercise);
+                    printf(" Press any key to return...");
+                    getch();
                 }
                 else if (strcmp(exerciseMenu->items[selectedIndex], "List Exercises") == 0) {
-                   
+                    CLEAR_SCREEN();
+                    listAllExercises();
+                    printf("Press any key to return...");
+                    getch();
                 }
                 else if (strcmp(exerciseMenu->items[selectedIndex], "Undo Last Exercises") == 0) {
-                
+                    CLEAR_SCREEN();
+                    undoLastExercise();
+                    printf("Press any key to return...");
+                    getch();
                 }
                 else if (strcmp(exerciseMenu->items[selectedIndex], "Back") == 0) {
                     return; // Return to the main menu
                 }
             }
-            }
         }
+    }
 
 
 

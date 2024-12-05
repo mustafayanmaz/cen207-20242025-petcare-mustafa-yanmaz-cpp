@@ -1,5 +1,6 @@
 ﻿#include "petcare.h"
 #include <stdbool.h>
+#include "methods.h"
 #include <stdint.h>
 unsigned int hashFunction(const char* str) {
     unsigned int hash = 0;
@@ -1266,4 +1267,42 @@ Pet* findPetByName(Pet* petList, int key) {
     }
     return NULL;
 }
+void addExerciseRoutine(const char* petName, const char* exercise) {
+    //100 is maximum rotuine count
+    if (exerciseStack.top >= MAX_ROUTINES - 1) {
+        printf("Error: Stack is full. Cannot add more routines.\n");
+        return;
+    }
 
+    exerciseStack.top++;
+    strncpy(exerciseStack.stack[exerciseStack.top].petName, petName, sizeof(exerciseStack.stack[exerciseStack.top].petName) - 1);
+    strncpy(exerciseStack.stack[exerciseStack.top].exercise, exercise, sizeof(exerciseStack.stack[exerciseStack.top].exercise) - 1);
+
+    printf("Exercise routine for '%s' added successfully!\n", petName);
+}
+
+void listAllExercises() {
+    if (exerciseStack.top == -1) {
+        printf("No exercise routines available.\n");
+        return;
+    }
+
+    printf("\n--- Exercise Routines ---\n");
+    for (int i = 1; i <= exerciseStack.top; i++) {
+        printf("Pet Name: %s\nRoutine: %s\n\n",
+            exerciseStack.stack[i].petName,
+            exerciseStack.stack[i].exercise);
+    }
+}
+
+void undoLastExercise() {
+    if (exerciseStack.top == -1) {
+        printf("Error: No exercise routines to undo.\n");
+        return;
+    }
+
+    printf("Undoing last exercise routine for '%s'...\n", exerciseStack.stack[exerciseStack.top].petName);
+    exerciseStack.top--;  // Remove the most recent exercise by decrementing the top index
+
+    printf("Last exercise routine undone successfully!\n");
+}
