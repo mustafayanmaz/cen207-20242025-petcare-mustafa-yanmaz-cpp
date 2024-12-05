@@ -591,6 +591,59 @@ void navigateVetMenu(Menu * vetMenu, const char* activeUser, Pet * petList) {
         }
         }
     }
+    void navigateExerciseMenu(Menu* exerciseMenu, Pet* petList, char* activeUser) {
+        int selectedIndex = 0;
+
+
+        while (1) {
+            CLEAR_SCREEN();
+            int consoleWidth = 50;
+            int paddingTop = 5;
+            for (int i = 0; i < paddingTop; i++) printf("\n");
+
+            drawFrameWithContent(exerciseMenu, selectedIndex, consoleWidth);
+
+            int key = getch();
+#ifdef _WIN32
+            if (key == 0 || key == 224) {
+                key = getch();
+                if (key == 72) { // UP_ARROW
+                    selectedIndex = (selectedIndex - 1 + exerciseMenu->itemCount) % exerciseMenu->itemCount;
+                }
+                else if (key == 80) { // DOWN_ARROW
+                    selectedIndex = (selectedIndex + 1) % exerciseMenu->itemCount;
+                }
+            }
+            else if (key == 13) { // ENTER
+#else
+            if (key == '\u001b') {
+                getch();
+                key = getch();
+                if (key == 'A') { // UP_ARROW
+                    selectedIndex = (selectedIndex - 1 + exerciseMenu->itemCount) % exerciseMenu->itemCount;
+                }
+                else if (key == 'B') { // DOWN_ARROW
+                    selectedIndex = (selectedIndex + 1) % exerciseMenu->itemCount;
+                }
+            }
+            else if (key == '\n') { // ENTER
+#endif
+                if (strcmp(exerciseMenu->items[selectedIndex], "Add Exercise Routine") == 0) {
+                 
+                }
+                else if (strcmp(exerciseMenu->items[selectedIndex], "List Exercises") == 0) {
+                   
+                }
+                else if (strcmp(exerciseMenu->items[selectedIndex], "Undo Last Exercises") == 0) {
+                
+                }
+                else if (strcmp(exerciseMenu->items[selectedIndex], "Back") == 0) {
+                    return; // Return to the main menu
+                }
+            }
+            }
+        }
+
 
 
 // Ana menü
@@ -641,10 +694,15 @@ void navigateMainMenu(Menu * mainMenu, HashTable * userTable, int* isAuthenticat
             else if (strcmp(mainMenu->items[selectedIndex], "Feeding and Medication Schedules") == 0) {
                 navigateFeedingMenu(mainMenu->subMenus[2], petList);
             }
+            else if (strcmp(mainMenu->items[selectedIndex], "Exercise Menu") == 0) {
+
+                navigateExerciseMenu(mainMenu->subMenus[3], petList, activeUser);
+
+            }
             else if (strcmp(mainMenu->items[selectedIndex], "Pet Birthday and Adoption Anniversary") == 0) {
                 navigateAdaptationMenu(mainMenu->subMenus[4], petList);
             }
-            
+           
             else if (strcmp(mainMenu->items[selectedIndex], "Exit") == 0) {
                 CLEAR_SCREEN();
                 printf("Exiting program...\n");
@@ -678,14 +736,14 @@ int main() {
     char* petItems[] = { "Add Pet", "Update Pet", "Delete", "List All Pets", "Search By Name or Type", "Back" };
     char* feedingItems[] = { "Add Feeding Schedule","Update Feeding Schedule","Delete Feeding Schedule", "View Feeding Schedule List","------------------------------------------","Add Medicine Schedule","Update Medicine Schedule","Delete Medicine Schedule", "View Medicine Schedule List", "Analyze Medicine Dependencies", "Back" };
     char* vetItems[] = { "Add Appointment","Update Appointment","Cancel Appointment", "View Appointments List", "Back" };
-    char* exerciseItems[] = { "Add Exercise Routine","List Exercises","------------------------------------------", "Set Grooming Schedule","Update Grooming Schedule","Delete Grooming Schedule", "View Exercise and Grooming Schedules", "Back" };
+    char* exerciseItems[] = { "Add Exercise Routine","List Exercises","Undo Last Exercises", "Back" };
     char* birthdayItems[] = { "Record Pet Birthday", "------------------------------------------","Add stray animals","Update stray animals","Delete stray animals","Search stray animals ","Adopt stray animals" ,"Back" };
 
     char* mainMenuItems[] = {
         "Manage Pets",
         "Veterinary Appointment Tracking",
         "Feeding and Medication Schedules",
-        "Pet Exercise and Grooming Reminders",
+        "Exercise Menu",
         "Pet Birthday and Adoption Anniversary",
         "Exit"
     };
@@ -695,7 +753,7 @@ int main() {
     Menu petsMenu = { "Manage Pets", NULL, petItems, 6, NULL };
     Menu feedingMenu = { "Feeding and Medication Schedules", NULL, feedingItems, 11, NULL };
     Menu vetMenu = { "Veterinary Appointment Tracking", NULL, vetItems, 5, NULL };
-    Menu exerciseMenu = { "Pet Exercise and Grooming Reminders", NULL, exerciseItems, 9, NULL };
+    Menu exerciseMenu = { "Exercise Menu", NULL, exerciseItems, 4, NULL };
     Menu birthdayMenu = { "Pet Birthday and Adoption Anniversary", NULL, birthdayItems, 8, NULL };
 
     // Ana menü ve alt menüler
