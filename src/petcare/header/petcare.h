@@ -173,4 +173,8 @@ Pet* findPetByName(Pet* petList, int key);
 void saveBPlusTreeToFile(BPlusNode* node, FILE* file, Pet* petList);
 void loadBirthdaysFromFile(BPlusTree* birthdayTree, const char* filename, Pet** petList);
 
+
+void addExerciseRoutine(const char* petName, const char* exercise);
+void listAllExercises();
+void undoLastExercise();
 #endif
