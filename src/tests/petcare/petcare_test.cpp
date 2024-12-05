@@ -2,6 +2,8 @@
 #include "petcare.h"
 #include <sstream>
 #include <cstdio> // For file operations
+#include "methods.h"
+
 
 
 // Fixture class for setting up a HashTable before each test
@@ -657,4 +659,136 @@ TEST_F(BPlusTreeTest, EncryptionTest) {
 
     // Clean up
     std::remove(filename);
+}
+
+
+
+
+// Test fixture to initialize and clean up
+class ExerciseRoutineTest : public ::testing::Test {
+protected:
+    void SetUp() override {
+        // Reset exercise stack before each test
+        exerciseStack.top = -1;
+    }
+
+    void TearDown() override {
+        // Reset exercise stack after each test
+        exerciseStack.top = -1;
+    }
+};
+
+// Test: Add an exercise routine successfully
+TEST_F(ExerciseRoutineTest, AddExerciseRoutine_Success) {
+    addExerciseRoutine("Buddy", "Morning Run");
+    EXPECT_EQ(exerciseStack.top, 0);
+    EXPECT_STREQ(exerciseStack.stack[0].petName, "Buddy");
+    EXPECT_STREQ(exerciseStack.stack[0].exercise, "Morning Run");
+}
+
+// Test: Add an exercise routine when stack is full
+TEST_F(ExerciseRoutineTest, AddExerciseRoutine_FullStack) {
+    for (int i = 0; i < MAX_ROUTINES; ++i) {
+        addExerciseRoutine("Pet", "Routine");
+    }
+
+    testing::internal::CaptureStdout();
+    addExerciseRoutine("OverflowPet", "Extra Routine");
+    std::string output = testing::internal::GetCapturedStdout();
+
+    EXPECT_EQ(exerciseStack.top, MAX_ROUTINES - 1);
+    EXPECT_NE(output.find("Error: Stack is full"), std::string::npos);
+}
+
+// Test: List all exercise routines
+TEST_F(ExerciseRoutineTest, ListAllExercises) {
+    addExerciseRoutine("Buddy", "Morning Run");
+    addExerciseRoutine("Kitty", "Evening Stretch");
+
+    testing::internal::CaptureStdout();
+    listAllExercises();
+    std::string output = testing::internal::GetCapturedStdout();
+
+    EXPECT_NE(output.find("Pet Name: Buddy\nRoutine: Morning Run"), std::string::npos);
+    EXPECT_NE(output.find("Pet Name: Kitty\nRoutine: Evening Stretch"), std::string::npos);
+}
+
+// Test: List exercises when stack is empty
+TEST_F(ExerciseRoutineTest, ListAllExercises_EmptyStack) {
+    testing::internal::CaptureStdout();
+    listAllExercises();
+    std::string output = testing::internal::GetCapturedStdout();
+
+    EXPECT_NE(output.find("No exercise routines available."), std::string::npos);
+}
+
+// Test: Undo the last exercise routine
+TEST_F(ExerciseRoutineTest, UndoLastExercise) {
+    addExerciseRoutine("Buddy", "Morning Run");
+    addExerciseRoutine("Kitty", "Evening Stretch");
+
+    testing::internal::CaptureStdout();
+    undoLastExercise();
+    std::string output = testing::internal::GetCapturedStdout();
+
+    EXPECT_EQ(exerciseStack.top, 0);
+    EXPECT_NE(output.find("Undoing last exercise routine for 'Kitty'"), std::string::npos);
+}
+
+// Test: Undo exercise routine when stack is empty
+TEST_F(ExerciseRoutineTest, UndoLastExercise_EmptyStack) {
+    testing::internal::CaptureStdout();
+    undoLastExercise();
+    std::string output = testing::internal::GetCapturedStdout();
+
+    EXPECT_NE(output.find("Error: No exercise routines to undo."), std::string::npos);
+}
+
+// Test fixture for `findPetByName`
+class FindPetByNameTest : public ::testing::Test {
+protected:
+    Pet* petList = nullptr;
+
+    void SetUp() override {
+        // Create a sample pet list
+        addPet(&petList, "Buddy", "Dog", 3, "Alice");
+        addPet(&petList, "Milo", "Cat", 2, "Bob");
+        addPet(&petList, "Charlie", "Bird", 1, "Carol");
+    }
+
+    void TearDown() override {
+        // Clean up the pet list
+        freePetList(petList);
+        petList = nullptr;
+    }
+};
+
+// Test: Find pet by name - Pet found
+TEST_F(FindPetByNameTest, FindPetByName_Found) {
+    int key = hashFunction("Milo");
+    Pet* foundPet = findPetByName(petList, key);
+
+    ASSERT_NE(foundPet, nullptr);
+    EXPECT_STREQ(foundPet->name, "Milo");
+    EXPECT_STREQ(foundPet->type, "Cat");
+    EXPECT_EQ(foundPet->age, 2);
+}
+
+// Test: Find pet by name - Pet not found
+TEST_F(FindPetByNameTest, FindPetByName_NotFound) {
+    int key = hashFunction("Unknown");
+    Pet* foundPet = findPetByName(petList, key);
+
+    EXPECT_EQ(foundPet, nullptr);
+}
+
+// Test: Find pet by name - Empty list
+TEST_F(FindPetByNameTest, FindPetByName_EmptyList) {
+    freePetList(petList);
+    petList = nullptr;
+
+    int key = hashFunction("Buddy");
+    Pet* foundPet = findPetByName(petList, key);
+
+    EXPECT_EQ(foundPet, nullptr);
 }
