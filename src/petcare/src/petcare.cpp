@@ -1267,6 +1267,8 @@ Pet* findPetByName(Pet* petList, int key) {
     }
     return NULL;
 }
+ExerciseStack exerciseStack = { { }, -1 }; // Standart C++ başlatma yöntemi
+
 void addExerciseRoutine(const char* petName, const char* exercise) {
     //100 is maximum rotuine count
     if (exerciseStack.top >= MAX_ROUTINES - 1) {
@@ -1288,12 +1290,13 @@ void listAllExercises() {
     }
 
     printf("\n--- Exercise Routines ---\n");
-    for (int i = 1; i <= exerciseStack.top; i++) {
+    for (int i = 0; i <= exerciseStack.top; i++) { // Döngü 0'dan başlamalı
         printf("Pet Name: %s\nRoutine: %s\n\n",
             exerciseStack.stack[i].petName,
             exerciseStack.stack[i].exercise);
     }
 }
+
 
 void undoLastExercise() {
     if (exerciseStack.top == -1) {

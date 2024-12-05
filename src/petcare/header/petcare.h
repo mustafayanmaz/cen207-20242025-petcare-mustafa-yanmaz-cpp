@@ -177,4 +177,19 @@ void loadBirthdaysFromFile(BPlusTree* birthdayTree, const char* filename, Pet** 
 void addExerciseRoutine(const char* petName, const char* exercise);
 void listAllExercises();
 void undoLastExercise();
+
+
+#define MAX_ROUTINES 100
+
+typedef struct {
+    char petName[50];
+    char exercise[100];
+} ExerciseRoutine;
+
+typedef struct {
+    ExerciseRoutine stack[MAX_ROUTINES];
+    int top;
+} ExerciseStack;
+
+extern ExerciseStack exerciseStack; // Global değişken bildirimi
 #endif
