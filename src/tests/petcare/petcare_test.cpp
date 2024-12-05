@@ -101,17 +101,17 @@ TEST_F(PetManagementTest, AddPetAddsNewPetToList) {
 
 
 TEST_F(PetManagementTest, UpdatePet_Success) {
-  
+
     addPet(&petList, "Bella", "Dog", 3, "Mustafa");
 
-   
+
     testing::internal::CaptureStdout();
     const char* name = "Bella";
     const char* owner = "Mustafa";
 
-   
+
     std::stringstream input("Luna\nDog\n4\n");
-    std::cin.rdbuf(input.rdbuf()); 
+    std::cin.rdbuf(input.rdbuf());
 
     updatePet(petList, name, owner);
     std::string output = testing::internal::GetCapturedStdout();
@@ -194,7 +194,7 @@ TEST_F(PetManagementTest, FreePetList) {
 
     // Bellek serbest bırakıldıktan sonra listeye erişimi test etme
     // Belleğe erişmeye çalışmamalıyız. Bunun yerine, sadece işlem sonrası bir problem olmamasını garanti edeceğiz.
-    // Eğer `freePetList` düzgün çalışıyorsa, aşağıdaki kodda bellek ihlali (segmentation fault) olmamalıdır.
+    // Eğer freePetList düzgün çalışıyorsa, aşağıdaki kodda bellek ihlali (segmentation fault) olmamalıdır.
     SUCCEED();  // Eğer bu noktaya kadar hata çıkmazsa test başarılıdır.
 }
 
@@ -437,7 +437,7 @@ TEST(AddAppointmentTest, AddUnauthorizedUserError) {
 
 
 // Test: updateAppointment - Başarılı
-/**/
+//
 TEST(UpdateAppointmentTest, UpdateValidAppointment) {
     resetData(); // Test başlangıcında veriyi sıfırla
     addPet(&petList, "Buddy", "Dog", 3, "Alice"); // Pet ekle
@@ -744,7 +744,7 @@ TEST_F(ExerciseRoutineTest, UndoLastExercise_EmptyStack) {
     EXPECT_NE(output.find("Error: No exercise routines to undo."), std::string::npos);
 }
 
-// Test fixture for `findPetByName`
+// Test fixture for findPetByName
 class FindPetByNameTest : public ::testing::Test {
 protected:
     Pet* petList = nullptr;
@@ -791,4 +791,103 @@ TEST_F(FindPetByNameTest, FindPetByName_EmptyList) {
     Pet* foundPet = findPetByName(petList, key);
 
     EXPECT_EQ(foundPet, nullptr);
+}
+
+// Test fixture for Queue operations
+class MedicineQueueTest : public ::testing::Test {
+protected:
+    Queue* medicineQueue;
+
+    void SetUp() override {
+        medicineQueue = createQueue(); // Test başlamadan önce boş bir kuyruk oluştur
+    }
+
+    void TearDown() override {
+        // Kuyruk elemanlarını temizle
+        while (!isQueueEmpty(medicineQueue)) {
+            FeedingSchedule* temp = dequeue(medicineQueue);
+            free(temp);
+        }
+        free(medicineQueue);
+    }
+};
+
+// Test: Medicine schedule ekleme
+TEST_F(MedicineQueueTest, AddMedicineSchedule) {
+    addMedicineSchedule(medicineQueue, "Buddy", "Morning Medicine");
+    ASSERT_FALSE(isQueueEmpty(medicineQueue));
+
+    EXPECT_STREQ(medicineQueue->front->petName, "Buddy");
+    EXPECT_STREQ(medicineQueue->front->scheduleDetails, "Morning Medicine");
+}
+
+// Test: Medicine schedule güncelleme
+TEST_F(MedicineQueueTest, UpdateMedicineSchedule) {
+    addMedicineSchedule(medicineQueue, "Buddy", "Morning Medicine");
+
+    updateMedicineSchedule(medicineQueue, "Buddy", "Evening Medicine");
+
+    EXPECT_STREQ(medicineQueue->front->scheduleDetails, "Evening Medicine");
+}
+
+// Test: Medicine schedule güncelleme (Hatalı isim)
+TEST_F(MedicineQueueTest, UpdateMedicineSchedule_NotFound) {
+    addMedicineSchedule(medicineQueue, "Buddy", "Morning Medicine");
+
+    testing::internal::CaptureStdout();
+    updateMedicineSchedule(medicineQueue, "Nonexistent", "Evening Medicine");
+    std::string output = testing::internal::GetCapturedStdout();
+
+    EXPECT_NE(output.find("Medicine schedule for pet 'Nonexistent' not found."), std::string::npos);
+}
+
+// Test: Medicine schedule silme
+TEST_F(MedicineQueueTest, DeleteMedicineSchedule) {
+    addMedicineSchedule(medicineQueue, "Buddy", "Morning Medicine");
+
+    deleteMedicineSchedule(medicineQueue, "Buddy");
+    EXPECT_TRUE(isQueueEmpty(medicineQueue));
+}
+
+// Test: Medicine schedule silme (Hatalı isim)
+TEST_F(MedicineQueueTest, DeleteMedicineSchedule_NotFound) {
+    addMedicineSchedule(medicineQueue, "Buddy", "Morning Medicine");
+
+    testing::internal::CaptureStdout();
+    deleteMedicineSchedule(medicineQueue, "Nonexistent");
+    std::string output = testing::internal::GetCapturedStdout();
+
+    EXPECT_NE(output.find("Medicine schedule for pet 'Nonexistent' not found."), std::string::npos);
+}
+
+// Test: Medicine schedule görüntüleme
+TEST_F(MedicineQueueTest, ViewMedicineSchedules) {
+    addMedicineSchedule(medicineQueue, "Buddy", "Morning Medicine");
+    addMedicineSchedule(medicineQueue, "Kitty", "Evening Medicine");
+
+    testing::internal::CaptureStdout();
+    viewMedicineSchedules(medicineQueue);
+    std::string output = testing::internal::GetCapturedStdout();
+
+    EXPECT_NE(output.find("Pet: Buddy, Schedule: Morning Medicine"), std::string::npos);
+    EXPECT_NE(output.find("Pet: Kitty, Schedule: Evening Medicine"), std::string::npos);
+}
+
+// Test: Medicine schedule görüntüleme (Boş kuyruk)
+TEST_F(MedicineQueueTest, ViewMedicineSchedules_EmptyQueue) {
+    testing::internal::CaptureStdout();
+    viewMedicineSchedules(medicineQueue);
+    std::string output = testing::internal::GetCapturedStdout();
+
+    EXPECT_NE(output.find("No medicine schedules available."), std::string::npos);
+}
+
+// Test: SCC algoritması çalıştırma
+TEST(MedicineScheduleTest, FindSCC) {
+    testing::internal::CaptureStdout();
+    findSCC();
+    std::string output = testing::internal::GetCapturedStdout();
+
+    EXPECT_NE(output.find("Analyzing medicine schedule dependencies using SCC algorithm..."), std::string::npos);
+    EXPECT_NE(output.find("Strongly Connected Components analysis completed."), std::string::npos);
 }
