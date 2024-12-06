@@ -659,6 +659,31 @@ void navigateVetMenu(Menu * vetMenu, const char* activeUser, Pet * petList) {
                     printf("Press any key to return...");
                     getch();
                 }
+                else if (strcmp(exerciseMenu->items[selectedIndex], "Add Grooming Routine") == 0) {
+                    CLEAR_SCREEN();
+                    char petName[50], exercise[100];
+                    printf("Enter pet's name: ");
+                    scanf("%s", petName);
+
+                    if (!isPetOwnedByUser(petList, petName, activeUser)) {
+                        printf("Error: Pet not found or does not belong to you.\n");
+                        getch();
+                        continue;
+                    }
+
+                    printf("Enter exercise routine: ");
+                    scanf(" %99[^\n]", exercise);
+
+                    /* addGroomingRoutine(petName, exercise);
+                    printf(" Press any key to return...");
+                    getch(); */
+                }
+                else if (strcmp(exerciseMenu->items[selectedIndex], "List Groomings") == 0) {
+                    /* CLEAR_SCREEN();
+                    listAllGroomings();
+                    printf("Press any key to return...");
+                    getch(); */
+                }
                 else if (strcmp(exerciseMenu->items[selectedIndex], "Back") == 0) {
                     return; // Return to the main menu
                 }
@@ -716,7 +741,7 @@ void navigateMainMenu(Menu * mainMenu, HashTable * userTable, int* isAuthenticat
             else if (strcmp(mainMenu->items[selectedIndex], "Feeding and Medication Schedules") == 0) {
                 navigateFeedingMenu(mainMenu->subMenus[2], petList);
             }
-            else if (strcmp(mainMenu->items[selectedIndex], "Exercise Menu") == 0) {
+            else if (strcmp(mainMenu->items[selectedIndex], "Exercise and Grooming Menu") == 0) {
 
                 navigateExerciseMenu(mainMenu->subMenus[3], petList, activeUser);
 
@@ -758,14 +783,14 @@ int main() {
     char* petItems[] = { "Add Pet", "Update Pet", "Delete", "List All Pets", "Search By Name or Type", "Back" };
     char* feedingItems[] = { "Add Feeding Schedule","Update Feeding Schedule","Delete Feeding Schedule", "View Feeding Schedule List","------------------------------------------","Add Medicine Schedule","Update Medicine Schedule","Delete Medicine Schedule", "View Medicine Schedule List", "Analyze Medicine Dependencies", "Back" };
     char* vetItems[] = { "Add Appointment","Update Appointment","Cancel Appointment", "View Appointments List", "Back" };
-    char* exerciseItems[] = { "Add Exercise Routine","List Exercises","Undo Last Exercises", "Back" };
+    char* exerciseItems[] = { "Add Exercise Routine","List Exercises","Undo Last Exercises","------------------------------------------","Add Grooming Routine","List Groomings", "Back" };
     char* birthdayItems[] = { "Record Pet Birthday", "------------------------------------------","Add stray animals","Update stray animals","Delete stray animals","Search stray animals ","Adopt stray animals" ,"Back" };
 
     char* mainMenuItems[] = {
         "Manage Pets",
         "Veterinary Appointment Tracking",
         "Feeding and Medication Schedules",
-        "Exercise Menu",
+        "Exercise and Grooming Menu",
         "Pet Birthday and Adoption Anniversary",
         "Exit"
     };
@@ -775,7 +800,7 @@ int main() {
     Menu petsMenu = { "Manage Pets", NULL, petItems, 6, NULL };
     Menu feedingMenu = { "Feeding and Medication Schedules", NULL, feedingItems, 11, NULL };
     Menu vetMenu = { "Veterinary Appointment Tracking", NULL, vetItems, 5, NULL };
-    Menu exerciseMenu = { "Exercise Menu", NULL, exerciseItems, 4, NULL };
+    Menu exerciseMenu = { "Exercise and Grooming Menu", NULL, exerciseItems, 7, NULL };
     Menu birthdayMenu = { "Pet Birthday and Adoption Anniversary", NULL, birthdayItems, 8, NULL };
 
     // Ana menü ve alt menüler
