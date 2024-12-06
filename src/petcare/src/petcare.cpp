@@ -307,31 +307,6 @@ void loadPetsFromFile(Pet** petList, const char* filename) {
 }
 
 
-void addFeedingSchedule(const char* petName, const char* scheduleDetails, Pet* petList) {
-    Pet* current = petList;
-    while (current) {
-        if (strcmp(current->name, petName) == 0) {
-            // Feeding Schedule ekle
-            printf("Adding feeding schedule for pet '%s': %s\n", petName, scheduleDetails);
-
-            // Burada dosyaya yazma veya hafızada saklama kodu eklenebilir
-            FILE* file = fopen("feeding_schedule.data", "a");
-            if (file) {
-                fprintf(file, "%s: %s\n", petName, scheduleDetails);
-                fclose(file);
-            }
-            else {
-                perror("Error saving feeding schedule");
-            }
-
-            printf("Feeding schedule added successfully.\n");
-            return;
-        }
-        current = current->next;
-    }
-    printf("Error: Pet '%s' not found.\n", petName);
-}
-
 
 void freePetList(Pet* petList) {
     while (petList) {

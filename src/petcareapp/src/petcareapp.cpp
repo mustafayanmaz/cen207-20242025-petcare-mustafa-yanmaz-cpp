@@ -671,18 +671,18 @@ void navigateVetMenu(Menu * vetMenu, const char* activeUser, Pet * petList) {
                         continue;
                     }
 
-                    printf("Enter exercise routine: ");
+                    printf("Enter grooming routine: ");
                     scanf(" %99[^\n]", exercise);
 
-                    /* addGroomingRoutine(petName, exercise);
+                     addGroomingRoutine(petName, exercise);
                     printf(" Press any key to return...");
-                    getch(); */
+                    getch(); 
                 }
                 else if (strcmp(exerciseMenu->items[selectedIndex], "List Groomings") == 0) {
-                    /* CLEAR_SCREEN();
+                     CLEAR_SCREEN();
                     listAllGroomings();
                     printf("Press any key to return...");
-                    getch(); */
+                    getch(); 
                 }
                 else if (strcmp(exerciseMenu->items[selectedIndex], "Back") == 0) {
                     return; // Return to the main menu
