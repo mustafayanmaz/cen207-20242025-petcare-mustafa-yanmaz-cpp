@@ -8,6 +8,7 @@
 #include <unistd.h>  // Linux için
 #endif
 
+#include "methods.h"
 #include "petcare.h" // Include UserAuth module
 
 #ifdef _WIN32
@@ -30,7 +31,7 @@ int getch() {
 }
 #endif
 
-Queue* feedingQueue = NULL; // Feeding Queue global değişken
+Queue* feedingQueue = NULL; 
 
 typedef struct Menu {
     char* title;
@@ -40,10 +41,8 @@ typedef struct Menu {
     struct Menu** subMenus;
 } Menu;
 
-// Aktif kullanıcıyı takip etmek için global değişken
 char activeUser[50] = "";
 
-// Yatay çizgi çizen fonksiyon
 void drawHorizontalLine(int width) {
     for (int i = 0; i < width; i++) {
         printf("*");
@@ -51,7 +50,6 @@ void drawHorizontalLine(int width) {
     printf("\n");
 }
 
-// Çerçeve ve içerik çizen fonksiyon
 void drawFrameWithContent(Menu* menu, int selectedIndex, int width) {
     drawHorizontalLine(width);
 
@@ -674,13 +672,13 @@ void navigateVetMenu(Menu * vetMenu, const char* activeUser, Pet * petList) {
                     printf("Enter grooming routine: ");
                     scanf(" %99[^\n]", exercise);
 
-                     addGroomingRoutine(petName, exercise);
+                    // addGroomingRoutine(petName, exercise);
                     printf(" Press any key to return...");
                     getch(); 
                 }
                 else if (strcmp(exerciseMenu->items[selectedIndex], "List Groomings") == 0) {
                      CLEAR_SCREEN();
-                    listAllGroomings();
+                  //  listAllGroomings();
                     printf("Press any key to return...");
                     getch(); 
                 }
@@ -691,6 +689,41 @@ void navigateVetMenu(Menu * vetMenu, const char* activeUser, Pet * petList) {
         }
     }
 
+    void aboutMenu(char text[]) {
+        CLEAR_SCREEN();
+        int freq[256] = { 0 };
+
+        // Frekansları hesapla
+        for (int i = 0; text[i] != '\0'; ++i)
+            freq[(int)text[i]]++;
+
+        // Karakter ve frekans dizileri oluştur
+        char data[256];
+        int frequencies[256], size = 0;
+        for (int i = 0; i < 256; ++i) {
+            if (freq[i]) {
+                data[size] = (char)i;
+                frequencies[size] = freq[i];
+                size++;
+            }
+        }
+
+        // Huffman kodları oluştur
+        char codes[256][MAX_TREE_HT];
+        HuffmanCodes(data, frequencies, size, codes);
+
+        // Metni sıkıştır
+        char compressed[1024];
+        compress(text, codes, compressed);
+        printf("\nCompressed Text: %s\n", compressed);
+
+        // Metni çöz
+        char decompressed[1024];
+        MinHeapNode* root = buildHuffmanTree(data, frequencies, size);
+        decompress(root, compressed, decompressed);
+        printf("Decompressed Text: %s\n", decompressed);
+        getch();
+    }
 
 
 // Ana menü
@@ -749,6 +782,10 @@ void navigateMainMenu(Menu * mainMenu, HashTable * userTable, int* isAuthenticat
             else if (strcmp(mainMenu->items[selectedIndex], "Pet Birthday and Adoption Anniversary") == 0) {
                 navigateAdaptationMenu(mainMenu->subMenus[4], petList);
             }
+
+            else if (strcmp(mainMenu->items[selectedIndex], "About") == 0) {
+                aboutMenu("This is our about section \n Mustafa , Ali Ufuktan , Omer Faruk and me (Onur) did this project ");
+            }
            
             else if (strcmp(mainMenu->items[selectedIndex], "Exit") == 0) {
                 CLEAR_SCREEN();
@@ -792,6 +829,7 @@ int main() {
         "Feeding and Medication Schedules",
         "Exercise and Grooming Menu",
         "Pet Birthday and Adoption Anniversary",
+        "About",
         "Exit"
     };
 
@@ -805,7 +843,7 @@ int main() {
 
     // Ana menü ve alt menüler
     Menu* mainSubMenus[] = { &petsMenu, &vetMenu, &feedingMenu, &exerciseMenu, &birthdayMenu, NULL };
-    Menu mainMenu = { "Main Menu", NULL, mainMenuItems, 6, mainSubMenus };
+    Menu mainMenu = { "Main Menu", NULL, mainMenuItems, 7, mainSubMenus };
 
     // Aktif kullanıcıyı takip etmek için global değişken
     extern char activeUser[50];
