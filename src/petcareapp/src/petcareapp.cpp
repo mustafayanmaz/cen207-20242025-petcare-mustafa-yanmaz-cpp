@@ -31,7 +31,7 @@ int getch() {
 }
 #endif
 
-Queue* feedingQueue = NULL; 
+Queue* feedingQueue = NULL;
 
 typedef struct Menu {
     char* title;
@@ -271,141 +271,153 @@ void navigatePetsMenu(Menu * petsMenu, Pet * *petList, int isAuthenticated) {
     }
 
 
-    void navigateFeedingMenu(Menu* feedingMenu, Pet* petList) {
-        int selectedIndex = 0;
+void navigateFeedingMenu(Menu * feedingMenu, Pet * petList) {
+    int selectedIndex = 0;
 
-        while (1) {
-            CLEAR_SCREEN();
-            int consoleWidth = 50;
-            int paddingTop = 5;
-            for (int i = 0; i < paddingTop; i++) printf("\n");
+    while (1) {
+        CLEAR_SCREEN();
+        int consoleWidth = 50;
+        int paddingTop = 5;
+        for (int i = 0; i < paddingTop; i++) printf("\n");
 
-            drawFrameWithContent(feedingMenu, selectedIndex, consoleWidth);
+        drawFrameWithContent(feedingMenu, selectedIndex, consoleWidth);
 
-            int key = getch();
+        int key = getch();
 #ifdef _WIN32
-            if (key == 0 || key == 224) {
-                key = getch();
-                if (key == 72) { // UP_ARROW
-                    selectedIndex = (selectedIndex - 1 + feedingMenu->itemCount) % feedingMenu->itemCount;
-                }
-                else if (key == 80) { // DOWN_ARROW
-                    selectedIndex = (selectedIndex + 1) % feedingMenu->itemCount;
-                }
+        if (key == 0 || key == 224) {
+            key = getch();
+            if (key == 72) { // UP_ARROW
+                selectedIndex = (selectedIndex - 1 + feedingMenu->itemCount) % feedingMenu->itemCount;
             }
-            else if (key == 13) { // ENTER
-#else
-            if (key == '\033') {
-                getch();
-                key = getch();
-                if (key == 'A') { // UP_ARROW
-                    selectedIndex = (selectedIndex - 1 + feedingMenu->itemCount) % feedingMenu->itemCount;
-                }
-                else if (key == 'B') { // DOWN_ARROW
-                    selectedIndex = (selectedIndex + 1) % feedingMenu->itemCount;
-                }
-            }
-            else if (key == '\n') { // ENTER
-#endif
-                if (strcmp(feedingMenu->items[selectedIndex], "Add Feeding Schedule") == 0) {
-                    char petName[50], scheduleDetails[100];
-                    CLEAR_SCREEN();
-                    printf("Enter pet's name: ");
-                    scanf("%s", petName);
-                    printf("Enter feeding schedule details: ");
-                    scanf(" %[^\n]", scheduleDetails);
-                    enqueue(feedingQueue, petName, scheduleDetails); // Schedule ekleniyor
-                    printf("Feeding schedule added! Press any key to return...");
-                    getch();
-                }
-                else if (strcmp(feedingMenu->items[selectedIndex], "Update Feeding Schedule") == 0) {
-                    char petName[50], newDetails[100];
-                    CLEAR_SCREEN();
-                    printf("Enter pet's name to update the schedule: ");
-                    scanf("%s", petName);
-                    printf("Enter new feeding schedule details: ");
-                    scanf(" %[^\n]", newDetails);
-                    updateFeedingSchedule(feedingQueue, petName, newDetails);
-                    printf("Press any key to return...");
-                    getch();
-                }
-                else if (strcmp(feedingMenu->items[selectedIndex], "Delete Feeding Schedule") == 0) {
-                    char petName[50];
-                    CLEAR_SCREEN();
-                    printf("Enter pet's name to delete the feeding schedule: ");
-                    scanf("%s", petName);
-                    deleteFeedingSchedule(feedingQueue, petName);
-                    printf("Press any key to return...");
-                    getch();
-                }
-                else if (strcmp(feedingMenu->items[selectedIndex], "View Feeding Schedule List") == 0) {
-                    CLEAR_SCREEN();
-                    if (isQueueEmpty(feedingQueue)) {
-                        printf("No feeding schedules available.\n");
-                    }
-                    else {
-                        viewFeedingSchedules(feedingQueue); // Sıralı listeyi göster
-                    }
-                    printf("Press any key to return...");
-                    getch();
-                }
-                else if (strcmp(feedingMenu->items[selectedIndex], "Add Medicine Schedule") == 0) {
-                    char petName[50], scheduleDetails[100];
-                    CLEAR_SCREEN();
-                    printf("Enter pet's name: ");
-                    scanf("%s", petName);
-                    printf("Enter medicine schedule details: ");
-                    scanf(" %[^\n]", scheduleDetails);
-                    addMedicineSchedule(medicineQueue, petName, scheduleDetails);
-                    printf("Press any key to return...");
-                    getch();
-                }
-                else if (strcmp(feedingMenu->items[selectedIndex], "Update Medicine Schedule") == 0) {
-                    char petName[50], newDetails[100];
-                    CLEAR_SCREEN();
-                    printf("Enter pet's name to update the medicine schedule: ");
-                    scanf("%s", petName);
-                    printf("Enter new medicine schedule details: ");
-                    scanf(" %[^\n]", newDetails);
-                    updateMedicineSchedule(medicineQueue, petName, newDetails);
-                    printf("Press any key to return...");
-                    getch();
-                }
-                else if (strcmp(feedingMenu->items[selectedIndex], "Delete Medicine Schedule") == 0) {
-                    char petName[50];
-                    CLEAR_SCREEN();
-                    printf("Enter pet's name to delete the medicine schedule: ");
-                    scanf("%s", petName);
-                    deleteMedicineSchedule(medicineQueue, petName);
-                    printf("Press any key to return...");
-                    getch();
-                }
-                else if (strcmp(feedingMenu->items[selectedIndex], "View Medicine Schedule List") == 0) {
-                    CLEAR_SCREEN();
-                    viewMedicineSchedules(medicineQueue); // Medicine Schedule listesi
-                    printf("Press any key to return...");
-                    getch();
-                }
-                else if (strcmp(feedingMenu->items[selectedIndex], "Analyze Medicine Dependencies") == 0) {
-                    CLEAR_SCREEN();
-                    findSCC(); // Medicine Dependencies analizi
-                    printf("Press any key to return...");
-                    getch();
-                }
-
-                else if (strcmp(feedingMenu->items[selectedIndex], "Back") == 0) {
-                    return; // Return to the previous menu
-                }
-            }
+            else if (key == 80) { // DOWN_ARROW
+                selectedIndex = (selectedIndex + 1) % feedingMenu->itemCount;
             }
         }
+        else if (key == 13) { // ENTER
+#else
+        if (key == '\033') {
+            getch();
+            key = getch();
+            if (key == 'A') { // UP_ARROW
+                selectedIndex = (selectedIndex - 1 + feedingMenu->itemCount) % feedingMenu->itemCount;
+            }
+            else if (key == 'B') { // DOWN_ARROW
+                selectedIndex = (selectedIndex + 1) % feedingMenu->itemCount;
+            }
+        }
+        else if (key == '\n') { // ENTER
+#endif
+            if (strcmp(feedingMenu->items[selectedIndex], "Add Feeding Schedule") == 0) {
+                char petName[50], scheduleDetails[100];
+                CLEAR_SCREEN();
+                printf("Enter pet's name: ");
+                scanf("%s", petName);
+                printf("Enter feeding schedule details: ");
+                scanf(" %[^\n]", scheduleDetails);
+                enqueue(feedingQueue, petName, scheduleDetails); // Schedule ekleniyor
+                printf("Feeding schedule added! Press any key to return...");
+                getch();
+            }
+            else if (strcmp(feedingMenu->items[selectedIndex], "Update Feeding Schedule") == 0) {
+                char petName[50], newDetails[100];
+                CLEAR_SCREEN();
+                printf("Enter pet's name to update the schedule: ");
+                scanf("%s", petName);
+                printf("Enter new feeding schedule details: ");
+                scanf(" %[^\n]", newDetails);
+                updateFeedingSchedule(feedingQueue, petName, newDetails);
+                printf("Press any key to return...");
+                getch();
+            }
+            else if (strcmp(feedingMenu->items[selectedIndex], "Delete Feeding Schedule") == 0) {
+                char petName[50];
+                CLEAR_SCREEN();
+                printf("Enter pet's name to delete the feeding schedule: ");
+                scanf("%s", petName);
+                deleteFeedingSchedule(feedingQueue, petName);
+                printf("Press any key to return...");
+                getch();
+            }
+            else if (strcmp(feedingMenu->items[selectedIndex], "View Feeding Schedule List") == 0) {
+                CLEAR_SCREEN();
+                if (isQueueEmpty(feedingQueue)) {
+                    printf("No feeding schedules available.\n");
+                }
+                else {
+                    viewFeedingSchedules(feedingQueue); // Sıralı listeyi göster
+                }
+                printf("Press any key to return...");
+                getch();
+            }
+            else if (strcmp(feedingMenu->items[selectedIndex], "Add Medicine Schedule") == 0) {
+                char petName[50], scheduleDetails[100];
+                CLEAR_SCREEN();
+                printf("Enter pet's name: ");
+                scanf("%s", petName);
+                printf("Enter medicine schedule details: ");
+                scanf(" %[^\n]", scheduleDetails);
+                addMedicineSchedule(medicineQueue, petName, scheduleDetails);
+                printf("Press any key to return...");
+                getch();
+            }
+            else if (strcmp(feedingMenu->items[selectedIndex], "Update Medicine Schedule") == 0) {
+                char petName[50], newDetails[100];
+                CLEAR_SCREEN();
+                printf("Enter pet's name to update the medicine schedule: ");
+                scanf("%s", petName);
+                printf("Enter new medicine schedule details: ");
+                scanf(" %[^\n]", newDetails);
+                updateMedicineSchedule(medicineQueue, petName, newDetails);
+                printf("Press any key to return...");
+                getch();
+            }
+            else if (strcmp(feedingMenu->items[selectedIndex], "Delete Medicine Schedule") == 0) {
+                char petName[50];
+                CLEAR_SCREEN();
+                printf("Enter pet's name to delete the medicine schedule: ");
+                scanf("%s", petName);
+                deleteMedicineSchedule(medicineQueue, petName);
+                printf("Press any key to return...");
+                getch();
+            }
+            else if (strcmp(feedingMenu->items[selectedIndex], "View Medicine Schedule List") == 0) {
+                CLEAR_SCREEN();
+                viewMedicineSchedules(medicineQueue); // Medicine Schedule listesi
+                printf("Press any key to return...");
+                getch();
+            }
+            else if (strcmp(feedingMenu->items[selectedIndex], "Analyze Medicine Dependencies") == 0) {
+                CLEAR_SCREEN();
+                findSCC(); // Medicine Dependencies analizi
+                printf("Press any key to return...");
+                getch();
+            }
 
+            else if (strcmp(feedingMenu->items[selectedIndex], "Back") == 0) {
+                return; // Return to the previous menu
+            }
+        }
+        }
+    }
+
+
+// Global pointer for the B+ tree (for pet birthdays)
+/* --------------- Adaptation (Birthday / Stray / Adoption) Menüsü --------------- */
 
 // Global pointer for the B+ tree (for pet birthdays)
 BPlusTree* birthdayTree = NULL;
 
+// Bu menüde: Record Pet Birthday + Stray Animals + Adoption
 void navigateAdaptationMenu(Menu * adaptationMenu, Pet * petList) {
     int selectedIndex = 0;
+
+    // Stray Animals listesi (adoptable.dat)
+    static StrayAnimal* strayList = NULL;
+    loadStrayAnimalsFromFile(&strayList, "adoptable.dat");
+
+    // Adopted Animals listesi
+    static AdoptedAnimal* adoptedList = NULL;
+    loadAdoptedAnimalsFromFile(&adoptedList, "adopted.dat");
 
     while (1) {
         CLEAR_SCREEN();
@@ -419,10 +431,10 @@ void navigateAdaptationMenu(Menu * adaptationMenu, Pet * petList) {
 #ifdef _WIN32
         if (key == 0 || key == 224) {
             key = getch();
-            if (key == 72) { // UP_ARROW
+            if (key == 72) {
                 selectedIndex = (selectedIndex - 1 + adaptationMenu->itemCount) % adaptationMenu->itemCount;
             }
-            else if (key == 80) { // DOWN_ARROW
+            else if (key == 80) {
                 selectedIndex = (selectedIndex + 1) % adaptationMenu->itemCount;
             }
         }
@@ -431,10 +443,10 @@ void navigateAdaptationMenu(Menu * adaptationMenu, Pet * petList) {
         if (key == '\033') {
             getch();
             key = getch();
-            if (key == 'A') { // UP_ARROW
+            if (key == 'A') {
                 selectedIndex = (selectedIndex - 1 + adaptationMenu->itemCount) % adaptationMenu->itemCount;
             }
-            else if (key == 'B') { // DOWN_ARROW
+            else if (key == 'B') {
                 selectedIndex = (selectedIndex + 1) % adaptationMenu->itemCount;
             }
         }
@@ -443,35 +455,178 @@ void navigateAdaptationMenu(Menu * adaptationMenu, Pet * petList) {
             if (strcmp(adaptationMenu->items[selectedIndex], "Record Pet Birthday") == 0) {
                 char petName[50];
                 int birthdayDay, birthdayMonth, birthdayYear;
-
                 CLEAR_SCREEN();
                 printf("Enter pet's name: ");
                 scanf("%s", petName);
-
-                // Check if the pet exists and belongs to the active user
+                // Check ownership
                 if (!isPetOwnedByUser(petList, petName, activeUser)) {
                     printf("Error: Pet not found or does not belong to you.\n");
                     getch();
                     continue;
                 }
-
                 printf("Enter Birthday (day month year, e.g., 15 8 2020): ");
                 scanf("%d %d %d", &birthdayDay, &birthdayMonth, &birthdayYear);
-
-                // Insert into B+ tree
                 if (birthdayTree == NULL) {
                     birthdayTree = createBPlusTree();
                 }
                 insertBirthday(birthdayTree, petName, birthdayDay, birthdayMonth, birthdayYear);
-
-                // Save birthdays to file
                 saveBirthdaysToFile(birthdayTree, "birthdays.data", petList);
-
                 printf("Birthday recorded successfully! Press any key to return...");
                 getch();
             }
+            else if (strcmp(adaptationMenu->items[selectedIndex], "Add stray animals") == 0) {
+                CLEAR_SCREEN();
+                // type, gender, arrival date, age
+                char type[50], gender[10], arrivalDate[20];
+                int age;
+                printf("Enter stray animal's type: ");
+                scanf("%s", type);
+                printf("Enter stray animal's gender: ");
+                scanf("%s", gender);
+                printf("Enter arrival date (dd/mm/yyyy): ");
+                scanf("%s", arrivalDate);
+                printf("Enter age: ");
+                scanf("%d", &age);
+
+                addStrayAnimalToList(&strayList, type, gender, arrivalDate, age);
+                saveStrayAnimalsToFile(strayList, "adoptable.dat");
+                printf("Stray animal added successfully! Press any key to continue...");
+                getch();
+            }
+            else if (strcmp(adaptationMenu->items[selectedIndex], "Update stray animals") == 0) {
+                CLEAR_SCREEN();
+                listStrayAnimals(strayList); // Mevcut sokak hayvanlarını göster
+                printf("Enter the ID of the stray animal to update: ");
+                int id;
+                scanf("%d", &id);
+
+                // Güncellenecek değerleri menü tarafında al
+                char newType[50], newGender[10], newArrivalDate[20];
+                int newAge;
+
+                printf("Enter new type: ");
+                scanf("%s", newType);
+
+                printf("Enter new gender: ");
+                scanf("%s", newGender);
+
+                printf("Enter new arrival date (dd/mm/yyyy): ");
+                scanf("%s", newArrivalDate);
+
+                printf("Enter new age: ");
+                scanf("%d", &newAge);
+
+                // Şimdi güncelleme fonksiyonunu çağır
+                updateStrayAnimal(strayList, id, newType, newGender, newArrivalDate, newAge);
+
+                // Değişiklikleri dosyaya kaydet
+                saveStrayAnimalsToFile(strayList, "adoptable.dat");
+
+                printf("Press any key to continue...");
+                getch();
+            }
+
+            else if (strcmp(adaptationMenu->items[selectedIndex], "Delete stray animals") == 0) {
+                CLEAR_SCREEN();
+                listStrayAnimals(strayList);
+                printf("Enter the ID of the stray animal to delete: ");
+                int id;
+                scanf("%d", &id);
+                deleteStrayAnimal(&strayList, id);
+                saveStrayAnimalsToFile(strayList, "adoptable.dat");
+                printf("Press any key to continue...");
+                getch();
+            }
+            else if (strcmp(adaptationMenu->items[selectedIndex], "Search stray animals") == 0) {
+                CLEAR_SCREEN();
+                char searchKey[50];
+                printf("Enter the animal type to search for: ");
+                scanf("%s", searchKey);
+                searchStrayAnimalsKMP(strayList, searchKey);
+                printf("Press any key to continue...");
+                getch();
+            }
+            else if (strcmp(adaptationMenu->items[selectedIndex], "Adopt stray animals") == 0) {
+                CLEAR_SCREEN();
+
+                // Sokak hayvanlarını listeleyelim (isterseniz adoptStrayAnimal içinde de listeleyebilirsiniz,
+                // ama bu kod düzeninde girişler menü tarafında yapıldığından burada göstermek mantıklı)
+                listStrayAnimals(strayList);
+
+                // Kullanıcıdan ID veya 'q' girmesini iste
+                printf("Select an ID to adopt (or 'q' to quit): ");
+                char choice[10];
+                scanf("%s", choice);
+
+                // Kullanıcı 'q' dediyse iptal
+                if (strcmp(choice, "q") == 0) {
+                    printf("Adoption cancelled.\n");
+                    printf("Press any key to continue...");
+                    getch(); // beklet
+                    return;
+                }
+
+                // Değilse chosenID al
+                int chosenID = atoi(choice);
+
+                // Yeni isim al
+                char newName[50];
+                printf("Enter a name you want to give this animal: ");
+                scanf("%s", newName);
+
+                // Adoption tarihi al
+                char adoptionDate[20];
+                printf("Enter adoption date (dd/mm/yyyy): ");
+                scanf("%s", adoptionDate);
+
+                // Ardından adoptStrayAnimal fonksiyonunu çağır:
+                adoptStrayAnimal(&strayList, activeUser, chosenID, newName, adoptionDate);
+
+                // Güvenlik için tekrar kaydedebiliriz (gerçi adoptStrayAnimal içinde de yapıldı)
+                saveStrayAnimalsToFile(strayList, "adoptable.dat");
+
+                printf("Press any key to continue...");
+                getch();
+            }
+
+            else if (strcmp(adaptationMenu->items[selectedIndex], "List all adopted animals") == 0) {
+                CLEAR_SCREEN();
+                // Adopted listesi read -> ekrana bas
+                free(adoptedList);
+                adoptedList = NULL;
+                loadAdoptedAnimalsFromFile(&adoptedList, "adopted.dat");
+                listAllAdoptedAnimals(adoptedList);
+                printf("Press any key to continue...");
+                getch();
+            }
+            else if (strcmp(adaptationMenu->items[selectedIndex], "List all adoptable animals") == 0) {
+                CLEAR_SCREEN();
+                listStrayAnimals(strayList);
+                printf("Press any key to continue...");
+                getch();
+            }
+            else if (strcmp(adaptationMenu->items[selectedIndex], "List Pet Birthdays") == 0) {
+                CLEAR_SCREEN();
+
+                // B+ ağacı yüklü değilse veya henüz yoksa yükleyelim (opsiyonel).
+                if (!birthdayTree) {
+                    birthdayTree = createBPlusTree();
+                }
+                // Tekrar dosyadan yükleyerek en güncel datayı almak isteyebiliriz:
+                // (Eğer otomatik yükleniyorsa, bu adım opsiyonel olabilir.)
+
+
+                listPetBirthdays(birthdayTree, petList);
+
+                printf("Press any key to continue...");
+                getch();
+            }
+
             else if (strcmp(adaptationMenu->items[selectedIndex], "Back") == 0) {
-                return; // Return to main menu
+                // Çıkarken stray ve adopted listesi kaydedilmiş olsun
+                saveStrayAnimalsToFile(strayList, "adoptable.dat");
+                saveAdoptedAnimalsToFile(adoptedList, "adopted.dat");
+                return;
             }
         }
         }
@@ -589,141 +744,141 @@ void navigateVetMenu(Menu * vetMenu, const char* activeUser, Pet * petList) {
         }
         }
     }
-    void navigateExerciseMenu(Menu* exerciseMenu, Pet* petList, char* activeUser) {
-        int selectedIndex = 0;
+void navigateExerciseMenu(Menu * exerciseMenu, Pet * petList, char* activeUser) {
+    int selectedIndex = 0;
 
 
-        while (1) {
-            CLEAR_SCREEN();
-            int consoleWidth = 50;
-            int paddingTop = 5;
-            for (int i = 0; i < paddingTop; i++) printf("\n");
-
-            drawFrameWithContent(exerciseMenu, selectedIndex, consoleWidth);
-
-            int key = getch();
-#ifdef _WIN32
-            if (key == 0 || key == 224) {
-                key = getch();
-                if (key == 72) { // UP_ARROW
-                    selectedIndex = (selectedIndex - 1 + exerciseMenu->itemCount) % exerciseMenu->itemCount;
-                }
-                else if (key == 80) { // DOWN_ARROW
-                    selectedIndex = (selectedIndex + 1) % exerciseMenu->itemCount;
-                }
-            }
-            else if (key == 13) { // ENTER
-#else
-            if (key == '\u001b') {
-                getch();
-                key = getch();
-                if (key == 'A') { // UP_ARROW
-                    selectedIndex = (selectedIndex - 1 + exerciseMenu->itemCount) % exerciseMenu->itemCount;
-                }
-                else if (key == 'B') { // DOWN_ARROW
-                    selectedIndex = (selectedIndex + 1) % exerciseMenu->itemCount;
-                }
-            }
-            else if (key == '\n') { // ENTER
-#endif
-                if (strcmp(exerciseMenu->items[selectedIndex], "Add Exercise Routine") == 0) {
-                    CLEAR_SCREEN();
-                    char petName[50], exercise[100];
-                    printf("Enter pet's name: ");
-                    scanf("%s", petName);
-
-                    if (!isPetOwnedByUser(petList, petName, activeUser)) {
-                        printf("Error: Pet not found or does not belong to you.\n");
-                        getch();
-                        continue;
-                    }
-
-                    printf("Enter exercise routine: ");
-                    scanf(" %99[^\n]", exercise);
-
-                    addExerciseRoutine(petName, exercise);
-                    printf(" Press any key to return...");
-                    getch();
-                }
-                else if (strcmp(exerciseMenu->items[selectedIndex], "List Exercises") == 0) {
-                    CLEAR_SCREEN();
-                    listAllExercises();
-                    printf("Press any key to return...");
-                    getch();
-                }
-                else if (strcmp(exerciseMenu->items[selectedIndex], "Undo Last Exercises") == 0) {
-                    CLEAR_SCREEN();
-                    undoLastExercise();
-                    printf("Press any key to return...");
-                    getch();
-                }
-                else if (strcmp(exerciseMenu->items[selectedIndex], "Add Grooming Routine") == 0) {
-                    CLEAR_SCREEN();
-                    char petName[50], exercise[100];
-                    printf("Enter pet's name: ");
-                    scanf("%s", petName);
-
-                    if (!isPetOwnedByUser(petList, petName, activeUser)) {
-                        printf("Error: Pet not found or does not belong to you.\n");
-                        getch();
-                        continue;
-                    }
-
-                    printf("Enter grooming routine: ");
-                    scanf(" %99[^\n]", exercise);
-
-                    // addGroomingRoutine(petName, exercise);
-                    printf(" Press any key to return...");
-                    getch(); 
-                }
-                else if (strcmp(exerciseMenu->items[selectedIndex], "List Groomings") == 0) {
-                     CLEAR_SCREEN();
-                  //  listAllGroomings();
-                    printf("Press any key to return...");
-                    getch(); 
-                }
-                else if (strcmp(exerciseMenu->items[selectedIndex], "Back") == 0) {
-                    return; // Return to the main menu
-                }
-            }
-        }
-    }
-
-    void aboutMenu(char text[]) {
+    while (1) {
         CLEAR_SCREEN();
-        int freq[256] = { 0 };
+        int consoleWidth = 50;
+        int paddingTop = 5;
+        for (int i = 0; i < paddingTop; i++) printf("\n");
 
-        // Frekansları hesapla
-        for (int i = 0; text[i] != '\0'; ++i)
-            freq[(int)text[i]]++;
+        drawFrameWithContent(exerciseMenu, selectedIndex, consoleWidth);
 
-        // Karakter ve frekans dizileri oluştur
-        char data[256];
-        int frequencies[256], size = 0;
-        for (int i = 0; i < 256; ++i) {
-            if (freq[i]) {
-                data[size] = (char)i;
-                frequencies[size] = freq[i];
-                size++;
+        int key = getch();
+#ifdef _WIN32
+        if (key == 0 || key == 224) {
+            key = getch();
+            if (key == 72) { // UP_ARROW
+                selectedIndex = (selectedIndex - 1 + exerciseMenu->itemCount) % exerciseMenu->itemCount;
+            }
+            else if (key == 80) { // DOWN_ARROW
+                selectedIndex = (selectedIndex + 1) % exerciseMenu->itemCount;
             }
         }
+        else if (key == 13) { // ENTER
+#else
+        if (key == '\u001b') {
+            getch();
+            key = getch();
+            if (key == 'A') { // UP_ARROW
+                selectedIndex = (selectedIndex - 1 + exerciseMenu->itemCount) % exerciseMenu->itemCount;
+            }
+            else if (key == 'B') { // DOWN_ARROW
+                selectedIndex = (selectedIndex + 1) % exerciseMenu->itemCount;
+            }
+        }
+        else if (key == '\n') { // ENTER
+#endif
+            if (strcmp(exerciseMenu->items[selectedIndex], "Add Exercise Routine") == 0) {
+                CLEAR_SCREEN();
+                char petName[50], exercise[100];
+                printf("Enter pet's name: ");
+                scanf("%s", petName);
 
-        // Huffman kodları oluştur
-        char codes[256][MAX_TREE_HT];
-        HuffmanCodes(data, frequencies, size, codes);
+                if (!isPetOwnedByUser(petList, petName, activeUser)) {
+                    printf("Error: Pet not found or does not belong to you.\n");
+                    getch();
+                    continue;
+                }
 
-        // Metni sıkıştır
-        char compressed[1024];
-        compress(text, codes, compressed);
-        printf("\nCompressed Text: %s\n", compressed);
+                printf("Enter exercise routine: ");
+                scanf(" %99[^\n]", exercise);
 
-        // Metni çöz
-        char decompressed[1024];
-        MinHeapNode* root = buildHuffmanTree(data, frequencies, size);
-        decompress(root, compressed, decompressed);
-        printf("Decompressed Text: %s\n", decompressed);
-        getch();
+                addExerciseRoutine(petName, exercise);
+                printf(" Press any key to return...");
+                getch();
+            }
+            else if (strcmp(exerciseMenu->items[selectedIndex], "List Exercises") == 0) {
+                CLEAR_SCREEN();
+                listAllExercises();
+                printf("Press any key to return...");
+                getch();
+            }
+            else if (strcmp(exerciseMenu->items[selectedIndex], "Undo Last Exercises") == 0) {
+                CLEAR_SCREEN();
+                undoLastExercise();
+                printf("Press any key to return...");
+                getch();
+            }
+            else if (strcmp(exerciseMenu->items[selectedIndex], "Add Grooming Routine") == 0) {
+                CLEAR_SCREEN();
+                char petName[50], exercise[100];
+                printf("Enter pet's name: ");
+                scanf("%s", petName);
+
+                if (!isPetOwnedByUser(petList, petName, activeUser)) {
+                    printf("Error: Pet not found or does not belong to you.\n");
+                    getch();
+                    continue;
+                }
+
+                printf("Enter grooming routine: ");
+                scanf(" %99[^\n]", exercise);
+
+                // addGroomingRoutine(petName, exercise);
+                printf(" Press any key to return...");
+                getch();
+            }
+            else if (strcmp(exerciseMenu->items[selectedIndex], "List Groomings") == 0) {
+                CLEAR_SCREEN();
+                //  listAllGroomings();
+                printf("Press any key to return...");
+                getch();
+            }
+            else if (strcmp(exerciseMenu->items[selectedIndex], "Back") == 0) {
+                return; // Return to the main menu
+            }
+        }
+        }
     }
+
+void aboutMenu(char text[]) {
+    CLEAR_SCREEN();
+    int freq[256] = { 0 };
+
+    // Frekansları hesapla
+    for (int i = 0; text[i] != '\0'; ++i)
+        freq[(int)text[i]]++;
+
+    // Karakter ve frekans dizileri oluştur
+    char data[256];
+    int frequencies[256], size = 0;
+    for (int i = 0; i < 256; ++i) {
+        if (freq[i]) {
+            data[size] = (char)i;
+            frequencies[size] = freq[i];
+            size++;
+        }
+    }
+
+    // Huffman kodları oluştur
+    char codes[256][MAX_TREE_HT];
+    HuffmanCodes(data, frequencies, size, codes);
+
+    // Metni sıkıştır
+    char compressed[1024];
+    compress(text, codes, compressed);
+    printf("\nCompressed Text: %s\n", compressed);
+
+    // Metni çöz
+    char decompressed[1024];
+    MinHeapNode* root = buildHuffmanTree(data, frequencies, size);
+    decompress(root, compressed, decompressed);
+    printf("Decompressed Text: %s\n", decompressed);
+    getch();
+}
 
 
 // Ana menü
@@ -731,7 +886,6 @@ void navigateMainMenu(Menu * mainMenu, HashTable * userTable, int* isAuthenticat
     int selectedIndex = 0;
     static Pet* petList = NULL;
     loadPetsFromFile(&petList, "pets.dat");
-
     while (1) {
         CLEAR_SCREEN();
         int consoleWidth = 50;
@@ -786,7 +940,7 @@ void navigateMainMenu(Menu * mainMenu, HashTable * userTable, int* isAuthenticat
             else if (strcmp(mainMenu->items[selectedIndex], "About") == 0) {
                 aboutMenu("This is our about section \n Mustafa , Ali Ufuktan , Omer Faruk and me (Onur) did this project ");
             }
-           
+
             else if (strcmp(mainMenu->items[selectedIndex], "Exit") == 0) {
                 CLEAR_SCREEN();
                 printf("Exiting program...\n");
@@ -805,10 +959,10 @@ void navigateMainMenu(Menu * mainMenu, HashTable * userTable, int* isAuthenticat
 // Programın ana fonksiyonu
 int main() {
 
-     // Feeding queue başlatılır
+    // Feeding queue başlatılır
     feedingQueue = createQueue();
     // Medicine Queue başlatılır
-    medicineQueue = createQueue(); 
+    medicineQueue = createQueue();
 
 
     int isAuthenticated = 0;
@@ -821,7 +975,7 @@ int main() {
     char* feedingItems[] = { "Add Feeding Schedule","Update Feeding Schedule","Delete Feeding Schedule", "View Feeding Schedule List","------------------------------------------","Add Medicine Schedule","Update Medicine Schedule","Delete Medicine Schedule", "View Medicine Schedule List", "Analyze Medicine Dependencies", "Back" };
     char* vetItems[] = { "Add Appointment","Update Appointment","Cancel Appointment", "View Appointments List", "Back" };
     char* exerciseItems[] = { "Add Exercise Routine","List Exercises","Undo Last Exercises","------------------------------------------","Add Grooming Routine","List Groomings", "Back" };
-    char* birthdayItems[] = { "Record Pet Birthday", "------------------------------------------","Add stray animals","Update stray animals","Delete stray animals","Search stray animals ","Adopt stray animals" ,"Back" };
+    char* birthdayItems[] = { "Record Pet Birthday","List Pet Birthdays","Add stray animals","Update stray animals","Delete stray animals","Search stray animals","Adopt stray animals","List all adoptable animals","List all adopted animals" ,"Back" };
 
     char* mainMenuItems[] = {
         "Manage Pets",
@@ -839,7 +993,7 @@ int main() {
     Menu feedingMenu = { "Feeding and Medication Schedules", NULL, feedingItems, 11, NULL };
     Menu vetMenu = { "Veterinary Appointment Tracking", NULL, vetItems, 5, NULL };
     Menu exerciseMenu = { "Exercise and Grooming Menu", NULL, exerciseItems, 7, NULL };
-    Menu birthdayMenu = { "Pet Birthday and Adoption Anniversary", NULL, birthdayItems, 8, NULL };
+    Menu birthdayMenu = { "Pet Birthday and Adoption Anniversary", NULL, birthdayItems, 10, NULL };
 
     // Ana menü ve alt menüler
     Menu* mainSubMenus[] = { &petsMenu, &vetMenu, &feedingMenu, &exerciseMenu, &birthdayMenu, NULL };

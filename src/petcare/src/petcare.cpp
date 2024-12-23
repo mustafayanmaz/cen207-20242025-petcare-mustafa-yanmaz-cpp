@@ -1127,6 +1127,7 @@ void saveBirthdaysToFile(BPlusTree* birthdayTree, const char* filename, Pet* pet
 }
 
 // Recursive helper to save B+ tree nodes
+// Recursive helper to save B+ tree nodes
 void saveBPlusTreeToFile(BPlusNode* node, FILE* file, Pet* petList) {
     if (!node) return;
 
@@ -1135,35 +1136,41 @@ void saveBPlusTreeToFile(BPlusNode* node, FILE* file, Pet* petList) {
     for (int i = 0; i < node->count; i++) {
         Pet* currentPet = findPetByName(petList, node->keys[i]);
         if (currentPet) {
-            // Encrypt pet's name
+            // 1) Pet'in adını (name) yaz
             size_t nameLen = strlen(currentPet->name) + 1;
-            char* encryptedName = (char*)malloc(nameLen);
-            strcpy(encryptedName, currentPet->name);
-            xorEncryptDecrypt(encryptedName, nameLen, encryptionKey);
-            fwrite(encryptedName, sizeof(char), nameLen, file);
-            free(encryptedName);
+            // önce uzunluğu yaz
+            fwrite(&nameLen, sizeof(size_t), 1, file);
 
-            // Encrypt pet's type
+            // XOR ile şifrele
+            xorEncryptDecrypt(currentPet->name, nameLen, encryptionKey);
+            // şifreli hâlini yaz
+            fwrite(currentPet->name, sizeof(char), nameLen, file);
+            // Bellekte geri döndürmek isterseniz (opsiyonel) tekrar XOR
+            xorEncryptDecrypt(currentPet->name, nameLen, encryptionKey);
+
+            // 2) Pet'in tipini (type) yaz
             size_t typeLen = strlen(currentPet->type) + 1;
-            char* encryptedType = (char*)malloc(typeLen);
-            strcpy(encryptedType, currentPet->type);
-            xorEncryptDecrypt(encryptedType, typeLen, encryptionKey);
-            fwrite(encryptedType, sizeof(char), typeLen, file);
-            free(encryptedType);
+            fwrite(&typeLen, sizeof(size_t), 1, file);
 
-            // Write pet's age directly (no encryption needed for integers)
+            xorEncryptDecrypt(currentPet->type, typeLen, encryptionKey);
+            fwrite(currentPet->type, sizeof(char), typeLen, file);
+            xorEncryptDecrypt(currentPet->type, typeLen, encryptionKey);
+
+            // 3) Pet'in yaşını (age) yaz (şifrelemeye gerek yoksa doğrudan)
             fwrite(&currentPet->age, sizeof(int), 1, file);
 
-            // Encrypt owner's name
+            // 4) Pet'in sahibini (owner) yaz
             size_t ownerLen = strlen(currentPet->owner) + 1;
-            char* encryptedOwner = (char*)malloc(ownerLen);
-            strcpy(encryptedOwner, currentPet->owner);
-            xorEncryptDecrypt(encryptedOwner, ownerLen, encryptionKey);
-            fwrite(encryptedOwner, sizeof(char), ownerLen, file);
-            free(encryptedOwner);
+            fwrite(&ownerLen, sizeof(size_t), 1, file);
 
-            // Encrypt encoded birth date
+            xorEncryptDecrypt(currentPet->owner, ownerLen, encryptionKey);
+            fwrite(currentPet->owner, sizeof(char), ownerLen, file);
+            xorEncryptDecrypt(currentPet->owner, ownerLen, encryptionKey);
+
+            // 5) Doğum tarihi (encodedDate) yaz
+            // node->values[i] = YYYYMMDD formatındadır.
             int encryptedDate = node->values[i];
+            // integer XOR yapmak için pointer olarak veriyoruz
             xorEncryptDecrypt((char*)&encryptedDate, sizeof(int), encryptionKey);
             fwrite(&encryptedDate, sizeof(int), 1, file);
         }
@@ -1179,6 +1186,8 @@ void saveBPlusTreeToFile(BPlusNode* node, FILE* file, Pet* petList) {
 
 
 
+
+// Load birthdays from file
 // Load birthdays from file
 void loadBirthdaysFromFile(BPlusTree* birthdayTree, const char* filename, Pet** petList) {
     FILE* file = fopen(filename, "rb");
@@ -1189,47 +1198,116 @@ void loadBirthdaysFromFile(BPlusTree* birthdayTree, const char* filename, Pet** 
 
     const char* encryptionKey = "SecretKey"; // Encryption key
 
-    while (1) {
-        char name[50], type[50], owner[50];
-        int age, encodedDate;
+    while (true) {
+        // 1) Adın (name) uzunluğunu oku
+        size_t nameLen;
+        if (fread(&nameLen, sizeof(size_t), 1, file) != 1) {
+            // Dosya sonu veya okuma hatası
+            break;
+        }
 
-        // Read and decrypt pet's name
-        if (fread(name, sizeof(char), sizeof(name), file) != sizeof(name)) break;
-        xorEncryptDecrypt(name, strlen(name) + 1, encryptionKey);
+        // nameLen kadar bellek ayır
+        char* nameBuf = (char*)malloc(nameLen);
+        if (!nameBuf) {
+            perror("Memory allocation error for nameBuf");
+            break;
+        }
 
-        // Read and decrypt pet's type
-        if (fread(type, sizeof(char), sizeof(type), file) != sizeof(type)) break;
-        xorEncryptDecrypt(type, strlen(type) + 1, encryptionKey);
+        // Şifreli adı oku
+        if (fread(nameBuf, sizeof(char), nameLen, file) != nameLen) {
+            free(nameBuf);
+            break;
+        }
+        // XOR deşifrele
+        xorEncryptDecrypt(nameBuf, nameLen, encryptionKey);
 
-        // Read pet's age directly
-        if (fread(&age, sizeof(int), 1, file) != 1) break;
+        // 2) Tipin (type) uzunluğunu oku
+        size_t typeLen;
+        if (fread(&typeLen, sizeof(size_t), 1, file) != 1) {
+            free(nameBuf);
+            break;
+        }
 
-        // Read and decrypt owner's name
-        if (fread(owner, sizeof(char), sizeof(owner), file) != sizeof(owner)) break;
-        xorEncryptDecrypt(owner, strlen(owner) + 1, encryptionKey);
+        char* typeBuf = (char*)malloc(typeLen);
+        if (!typeBuf) {
+            perror("Memory allocation error for typeBuf");
+            free(nameBuf);
+            break;
+        }
 
-        // Read and decrypt encoded birth date
-        if (fread(&encodedDate, sizeof(int), 1, file) != 1) break;
+        if (fread(typeBuf, sizeof(char), typeLen, file) != typeLen) {
+            free(nameBuf);
+            free(typeBuf);
+            break;
+        }
+        xorEncryptDecrypt(typeBuf, typeLen, encryptionKey);
+
+        // 3) Yaş (age)
+        int age;
+        if (fread(&age, sizeof(int), 1, file) != 1) {
+            free(nameBuf);
+            free(typeBuf);
+            break;
+        }
+
+        // 4) Sahibin (owner) uzunluğu
+        size_t ownerLen;
+        if (fread(&ownerLen, sizeof(size_t), 1, file) != 1) {
+            free(nameBuf);
+            free(typeBuf);
+            break;
+        }
+
+        char* ownerBuf = (char*)malloc(ownerLen);
+        if (!ownerBuf) {
+            perror("Memory allocation error for ownerBuf");
+            free(nameBuf);
+            free(typeBuf);
+            break;
+        }
+
+        if (fread(ownerBuf, sizeof(char), ownerLen, file) != ownerLen) {
+            free(nameBuf);
+            free(typeBuf);
+            free(ownerBuf);
+            break;
+        }
+        xorEncryptDecrypt(ownerBuf, ownerLen, encryptionKey);
+
+        // 5) Doğum tarihi (encodedDate)
+        int encodedDate;
+        if (fread(&encodedDate, sizeof(int), 1, file) != 1) {
+            free(nameBuf);
+            free(typeBuf);
+            free(ownerBuf);
+            break;
+        }
         xorEncryptDecrypt((char*)&encodedDate, sizeof(int), encryptionKey);
 
-        // Decode date into day, month, year
-        int day = encodedDate / 10000;
-        int month = (encodedDate / 100) % 100;
-        int year = encodedDate % 100;
+        // Tarihi çöz: YYYYMMDD → year, month, day
+        int year = encodedDate / 10000;           // İlk 4 (veya 3-4) basamak yıl
+        int month = (encodedDate / 100) % 100;     // Ortadaki 2 basamak ay
+        int day = encodedDate % 100;            // Son 2 basamak gün
 
-        // Add pet back to the list
-        addPet(petList, name, type, age, owner);
+        // Pet'i listeye ekle
+        addPet(petList, nameBuf, typeBuf, age, ownerBuf);
 
-        // Add the birth date to the B+ tree
+        // B+ ağacına (birthdayTree) ekle
         if (!birthdayTree->root) {
             birthdayTree->root = createBPlusNode();
         }
-        insertBirthday(birthdayTree, name, day, month, year);
+        insertBirthday(birthdayTree, nameBuf, day, month, year);
+
+        // malloc ile açtığımız buffer'ları serbest bırak
+        free(nameBuf);
+        free(typeBuf);
+        free(ownerBuf);
     }
 
     fclose(file);
     printf("Birthdays loaded successfully from %s.\n", filename);
 }
+
 
 
 // Find a pet by name
@@ -1284,3 +1362,392 @@ void undoLastExercise() {
 
     printf("Last exercise routine undone successfully!\n");
 }
+
+
+static const char* STRAY_KEY = "StrayKey";
+static const char* ADOPTED_KEY = "AdoptedKey";
+
+static void computeLPSArray(const char* pattern, int M, int* lps) {
+    int len = 0;
+    lps[0] = 0;
+    int i = 1;
+    while (i < M) {
+        if (pattern[i] == pattern[len]) {
+            len++;
+            lps[i] = len;
+            i++;
+        }
+        else {
+            if (len != 0) {
+                len = lps[len - 1];
+            }
+            else {
+                lps[i] = 0;
+                i++;
+            }
+        }
+    }
+}
+
+bool KMPcontains(const char* text, const char* pattern) {
+    int N = strlen(text);
+    int M = strlen(pattern);
+    if (M == 0) return true; // boş pattern
+    int* lps = (int*)malloc(sizeof(int) * M);
+    computeLPSArray(pattern, M, lps);
+    int i = 0;
+    int j = 0;
+    while (i < N) {
+        if (pattern[j] == text[i]) {
+            i++;
+            j++;
+        }
+        if (j == M) {
+            free(lps);
+            return true;
+        }
+        else if (i < N && pattern[j] != text[i]) {
+            if (j != 0) j = lps[j - 1];
+            else i++;
+        }
+    }
+    free(lps);
+    return false;
+}
+
+void loadStrayAnimalsFromFile(StrayAnimal** list, const char* filename) {
+    FILE* file = fopen(filename, "rb");
+    if (!file) {
+        return;
+    }
+    StrayAnimal temp;
+    while (fread(&temp, sizeof(StrayAnimal), 1, file) == 1) {
+        // XOR Decrypt struct
+        xorEncryptDecrypt((char*)&temp, sizeof(StrayAnimal), STRAY_KEY);
+
+        // Bellekte yeni nod
+        StrayAnimal* newAnimal = (StrayAnimal*)malloc(sizeof(StrayAnimal));
+        memcpy(newAnimal, &temp, sizeof(StrayAnimal));
+        newAnimal->next = NULL;
+
+        // Listeye ekle
+        if (*list == NULL) {
+            *list = newAnimal;
+        }
+        else {
+            StrayAnimal* cur = *list;
+            while (cur->next != NULL) {
+                cur = cur->next;
+            }
+            cur->next = newAnimal;
+        }
+    }
+    fclose(file);
+}
+
+void saveStrayAnimalsToFile(StrayAnimal* list, const char* filename) {
+    FILE* file = fopen(filename, "wb");
+    if (!file) {
+        perror("Error opening adoptable file");
+        return;
+    }
+    StrayAnimal* current = list;
+    while (current) {
+        StrayAnimal temp;
+        memcpy(&temp, current, sizeof(StrayAnimal));
+        // XOR Encrypt
+        xorEncryptDecrypt((char*)&temp, sizeof(StrayAnimal), STRAY_KEY);
+        fwrite(&temp, sizeof(StrayAnimal), 1, file);
+        current = current->next;
+    }
+    fclose(file);
+}
+
+void addStrayAnimalToList(StrayAnimal** list, const char* type, const char* gender,
+    const char* arrivalDate, int age) {
+    static int globalID = 1;
+    StrayAnimal* cur = *list;
+    while (cur) {
+        if (cur->id >= globalID) {
+            globalID = cur->id + 1;
+        }
+        cur = cur->next;
+    }
+
+    StrayAnimal* newAnimal = (StrayAnimal*)malloc(sizeof(StrayAnimal));
+    newAnimal->id = globalID++;
+    strcpy(newAnimal->type, type);
+    strcpy(newAnimal->gender, gender);
+    strcpy(newAnimal->arrivalDate, arrivalDate);
+    newAnimal->age = age;
+    newAnimal->next = NULL;
+
+    // Listeye ekle
+    if (*list == NULL) {
+        *list = newAnimal;
+    }
+    else {
+        StrayAnimal* temp = *list;
+        while (temp->next != NULL) {
+            temp = temp->next;
+        }
+        temp->next = newAnimal;
+    }
+    printf("Stray animal added with ID: %d\n", newAnimal->id);
+}
+
+void updateStrayAnimal(StrayAnimal* list, int id,
+    const char* newType,
+    const char* newGender,
+    const char* newArrivalDate,
+    int newAge)
+{
+    StrayAnimal* current = list;
+    while (current) {
+        if (current->id == id) {
+            // Direkt güncelleme
+            strcpy(current->type, newType);
+            strcpy(current->gender, newGender);
+            strcpy(current->arrivalDate, newArrivalDate);
+            current->age = newAge;
+
+            printf("Stray animal (ID %d) updated successfully.\n", id);
+            return;
+        }
+        current = current->next;
+    }
+    printf("Stray animal with ID %d not found.\n", id);
+}
+
+
+void deleteStrayAnimal(StrayAnimal** list, int id) {
+    StrayAnimal* current = *list;
+    StrayAnimal* prev = NULL;
+    while (current) {
+        if (current->id == id) {
+            if (prev == NULL) {
+                *list = current->next;
+            }
+            else {
+                prev->next = current->next;
+            }
+            free(current);
+            printf("Stray animal with ID %d deleted successfully.\n", id);
+            return;
+        }
+        prev = current;
+        current = current->next;
+    }
+    printf("Stray animal with ID %d not found.\n", id);
+}
+
+void listStrayAnimals(StrayAnimal* list) {
+    if (!list) {
+        printf("No stray animals available.\n");
+        return;
+    }
+    printf("\n--- List of Stray Animals ---\n");
+    StrayAnimal* current = list;
+    while (current) {
+        printf("ID: %d, Type: %s, Gender: %s, ArrivalDate: %s, Age: %d\n",
+            current->id, current->type, current->gender,
+            current->arrivalDate, current->age);
+        current = current->next;
+    }
+}
+
+void searchStrayAnimalsKMP(StrayAnimal* list, const char* searchKey) {
+    if (!list) {
+        printf("No stray animals to search.\n");
+        return;
+    }
+    int found = 0;
+    StrayAnimal* current = list;
+    while (current) {
+        // type alanında searchKey geçiyor mu?
+        if (KMPcontains(current->type, searchKey)) {
+            printf("ID: %d, Type: %s, Gender: %s, ArrivalDate: %s, Age: %d\n",
+                current->id, current->type, current->gender,
+                current->arrivalDate, current->age);
+            found = 1;
+        }
+        current = current->next;
+    }
+    if (!found) {
+        printf("No stray animals found with type containing '%s'.\n", searchKey);
+    }
+}
+
+void loadAdoptedAnimalsFromFile(AdoptedAnimal** list, const char* filename) {
+    FILE* file = fopen(filename, "rb");
+    if (!file) {
+        return;
+    }
+    AdoptedAnimal temp;
+    while (fread(&temp, sizeof(AdoptedAnimal), 1, file) == 1) {
+        // XOR Decrypt
+        xorEncryptDecrypt((char*)&temp, sizeof(AdoptedAnimal), ADOPTED_KEY);
+
+        // Bellekte yeni node
+        AdoptedAnimal* newAdopted = (AdoptedAnimal*)malloc(sizeof(AdoptedAnimal));
+        memcpy(newAdopted, &temp, sizeof(AdoptedAnimal));
+        newAdopted->next = NULL;
+
+        // Listeye ekle
+        if (*list == NULL) {
+            *list = newAdopted;
+        }
+        else {
+            AdoptedAnimal* cur = *list;
+            while (cur->next != NULL) {
+                cur = cur->next;
+            }
+            cur->next = newAdopted;
+        }
+    }
+    fclose(file);
+}
+
+void saveAdoptedAnimalsToFile(AdoptedAnimal* list, const char* filename) {
+    FILE* file = fopen(filename, "wb");
+    if (!file) {
+        perror("Error opening adopted file");
+        return;
+    }
+    AdoptedAnimal* current = list;
+    while (current) {
+        AdoptedAnimal temp;
+        memcpy(&temp, current, sizeof(AdoptedAnimal));
+        // XOR Encrypt
+        xorEncryptDecrypt((char*)&temp, sizeof(AdoptedAnimal), ADOPTED_KEY);
+        fwrite(&temp, sizeof(AdoptedAnimal), 1, file);
+        current = current->next;
+    }
+    fclose(file);
+}
+
+void adoptStrayAnimal(StrayAnimal** strayList,
+    const char* activeUser,
+    int chosenID,
+    const char* newName,
+    const char* adoptionDate)
+{
+    if (!(*strayList)) {
+        printf("No stray animals available to adopt.\n");
+        return;
+    }
+
+    StrayAnimal* current = *strayList;
+    StrayAnimal* prev = NULL;
+
+    while (current) {
+        if (current->id == chosenID) {
+            AdoptedAnimal adopted;
+            adopted.id = current->id;
+            strcpy(adopted.type, current->type);
+            strcpy(adopted.gender, current->gender);
+            strcpy(adopted.arrivalDate, current->arrivalDate);
+            adopted.age = current->age;
+
+            strcpy(adopted.owner, activeUser);
+            strcpy(adopted.adoptionDate, adoptionDate);
+            printf("You named the animal: %s\n", newName);
+
+            AdoptedAnimal* adoptedList = NULL;
+            loadAdoptedAnimalsFromFile(&adoptedList, "adopted.dat");
+
+            AdoptedAnimal* newNode = (AdoptedAnimal*)malloc(sizeof(AdoptedAnimal));
+            memcpy(newNode, &adopted, sizeof(AdoptedAnimal));
+            newNode->next = NULL;
+
+            if (adoptedList == NULL) {
+                adoptedList = newNode;
+            }
+            else {
+                AdoptedAnimal* tmp = adoptedList;
+                while (tmp->next) {
+                    tmp = tmp->next;
+                }
+                tmp->next = newNode;
+            }
+
+            saveAdoptedAnimalsToFile(adoptedList, "adopted.dat");
+
+            if (prev == NULL) {
+                *strayList = current->next;
+            }
+            else {
+                prev->next = current->next;
+            }
+            free(current);
+
+            // adoptable.dat dosyasını güncelle
+            saveStrayAnimalsToFile(*strayList, "adoptable.dat");
+
+            printf("Adoption complete. Animal ID %d adopted.\n", chosenID);
+            return;
+        }
+        prev = current;
+        current = current->next;
+    }
+
+    printf("Stray animal with ID %d not found.\n", chosenID);
+}
+
+
+void listAllAdoptedAnimals(AdoptedAnimal* list) {
+    if (!list) {
+        printf("No adopted animals found.\n");
+        return;
+    }
+    printf("\n--- List of Adopted Animals ---\n");
+    AdoptedAnimal* current = list;
+    while (current) {
+        printf("ID: %d, Type: %s, Gender: %s, ArrivalDate: %s, Age: %d, Owner: %s, AdoptionDate: %s\n",
+            current->id, current->type, current->gender, current->arrivalDate,
+            current->age, current->owner, current->adoptionDate);
+        current = current->next;
+    }
+}
+
+static void traverseBPlusNodeForBirthdays(BPlusNode* node, Pet* petList) {
+    if (!node) return;
+
+    // Mevcut node’daki tüm key/value çiftlerini oku
+    for (int i = 0; i < node->count; i++) {
+        int key = node->keys[i];
+        int encodedDate = node->values[i];
+
+        // Pet’i bul
+        Pet* foundPet = findPetByName(petList, key);
+        if (foundPet) {
+            // Encoded date: YYYYMMDD format
+            int year = encodedDate / 10000;
+            int month = (encodedDate / 100) % 100;
+            int day = encodedDate % 100;
+
+            printf("Pet Name: %s | Type: %s | Owner: %s | Birthday: %02d/%02d/%04d\n",
+                foundPet->name,
+                foundPet->type,
+                foundPet->owner,
+                day, month, year);
+        }
+    }
+
+    for (int i = 0; i <= node->count; i++) {
+        if (node->children[i]) {
+            traverseBPlusNodeForBirthdays(node->children[i], petList);
+        }
+    }
+}
+
+void listPetBirthdays(BPlusTree* birthdayTree, Pet* petList) {
+    if (!birthdayTree || !birthdayTree->root) {
+        printf("No birthdays recorded.\n");
+        return;
+    }
+    printf("\n--- List of Pet Birthdays ---\n");
+    traverseBPlusNodeForBirthdays(birthdayTree->root, petList);
+    printf("--------------------------------\n");
+}
+

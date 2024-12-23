@@ -172,7 +172,7 @@ void saveBirthdaysToFile(BPlusTree* birthdayTree, const char* filename, Pet* pet
 Pet* findPetByName(Pet* petList, int key);
 void saveBPlusTreeToFile(BPlusNode* node, FILE* file, Pet* petList);
 void loadBirthdaysFromFile(BPlusTree* birthdayTree, const char* filename, Pet** petList);
-
+void listPetBirthdays(BPlusTree* birthdayTree, Pet* petList);
 
 void addExerciseRoutine(const char* petName, const char* exercise);
 void listAllExercises();
@@ -192,4 +192,64 @@ typedef struct {
 } ExerciseStack;
 
 extern ExerciseStack exerciseStack; // Global değişken bildirimi
+
+
+// Sokak hayvanı yapısı
+typedef struct StrayAnimal {
+    int id;
+    char type[50];
+    char gender[10];
+    char arrivalDate[20];
+    int age;
+    struct StrayAnimal* next;
+} StrayAnimal;
+
+// Evlat edinilmiş hayvan yapısı
+typedef struct AdoptedAnimal {
+    int id;
+    char type[50];
+    char gender[10];
+    char arrivalDate[20];
+    int age;
+    char owner[50];
+    char adoptionDate[20];
+    struct AdoptedAnimal* next;
+} AdoptedAnimal;
+
+// petcare.h
+void adoptStrayAnimal(StrayAnimal** strayList,
+    const char* activeUser,
+    int chosenID,
+    const char* newName,
+    const char* adoptionDate);
+
+// Sokak hayvanları (adoptable.dat) fonksiyonları
+void loadStrayAnimalsFromFile(StrayAnimal** list, const char* filename);
+void saveStrayAnimalsToFile(StrayAnimal* list, const char* filename);
+void addStrayAnimalToList(StrayAnimal** list, const char* type, const char* gender,
+    const char* arrivalDate, int age);
+void updateStrayAnimal(
+    StrayAnimal* list,
+    int id,
+    const char* newType,
+    const char* newGender,
+    const char* newArrivalDate,
+    int newAge
+);
+
+void deleteStrayAnimal(StrayAnimal** list, int id);
+void listStrayAnimals(StrayAnimal* list);
+
+// Sokak hayvanlarını aramak için KMP
+void searchStrayAnimalsKMP(StrayAnimal* list, const char* searchKey);
+bool KMPcontains(const char* text, const char* pattern);
+
+
+// Evlat edinme (adopted.dat) fonksiyonları
+void loadAdoptedAnimalsFromFile(AdoptedAnimal** list, const char* filename);
+void saveAdoptedAnimalsToFile(AdoptedAnimal* list, const char* filename);
+// petcare.h
+void adoptStrayAnimal(StrayAnimal** strayList, const char* activeUser);
+
+void listAllAdoptedAnimals(AdoptedAnimal* list);
 #endif
