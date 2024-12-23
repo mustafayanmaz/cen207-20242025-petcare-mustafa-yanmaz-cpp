@@ -3,7 +3,7 @@
 #include <sstream>
 #include <cstdio> // For file operations
 #include "methods.h"
-
+#include <string>
 
 
 // Fixture class for setting up a HashTable before each test
@@ -1090,30 +1090,436 @@ TEST_F(HuffmanTest, BuildHuffmanTreeTest) {
     EXPECT_EQ(root->freq, 9);  // Toplam frekans
 }
 
-// Test 5: Huffman kodlarının doğru oluşturulması
 TEST_F(HuffmanTest, HuffmanCodesTest) {
     EXPECT_STRNE(codes[(int)'a'], "");
     EXPECT_STRNE(codes[(int)'b'], "");
     EXPECT_STRNE(codes[(int)'c'], "");
 }
 
-// Test 6: Sıkıştırma
 TEST_F(HuffmanTest, CompressTest) {
     compress(input, codes, compressed);
     ASSERT_STRNE(compressed, "");
     std::cout << "Sıkıştırılmış metin: " << compressed << std::endl;
 }
 
-// Test 7: Çözme
 TEST_F(HuffmanTest, DecompressTest) {
     compress(input, codes, compressed);
     decompress(root, compressed, decompressed);
     EXPECT_STREQ(input, decompressed);
 }
 
-// Test 8: Tümleşik test: Sıkıştırma ve çözme
 TEST_F(HuffmanTest, CompressDecompressIntegratedTest) {
     compress(input, codes, compressed);
     decompress(root, compressed, decompressed);
     EXPECT_STREQ(input, decompressed);
 }
+
+
+
+
+static const char* TEST_ADOPTABLE_FILE = "test_adoptable.dat";
+static const char* TEST_ADOPTED_FILE = "test_adopted.dat";
+
+void removeFileIfExists(const char* filename) {
+    std::remove(filename);
+}
+
+
+class StrayAnimalTest : public ::testing::Test {
+protected:
+    void SetUp() override {
+        strayList = nullptr;
+        adoptedList = nullptr;
+
+        removeFileIfExists(TEST_ADOPTABLE_FILE);
+        removeFileIfExists(TEST_ADOPTED_FILE);
+    }
+
+    void TearDown() override {
+        while (strayList) {
+            StrayAnimal* temp = strayList;
+            strayList = strayList->next;
+            free(temp);
+        }
+        while (adoptedList) {
+            AdoptedAnimal* temp = adoptedList;
+            adoptedList = adoptedList->next;
+            free(temp);
+        }
+
+        removeFileIfExists(TEST_ADOPTABLE_FILE);
+        removeFileIfExists(TEST_ADOPTED_FILE);
+    }
+
+    StrayAnimal* strayList;
+    AdoptedAnimal* adoptedList;
+};
+
+
+TEST_F(StrayAnimalTest, KMP_EmptyPatternShouldMatchAnyText) {
+    const char* text = "example";
+    const char* pattern = "";
+
+    bool result = KMPcontains(text, pattern);
+    EXPECT_TRUE(result);
+}
+
+TEST_F(StrayAnimalTest, KMP_Found) {
+    const char* text = "dogcatparrot";
+    const char* pattern = "cat";
+    bool result = KMPcontains(text, pattern);
+    EXPECT_TRUE(result);
+}
+
+TEST_F(StrayAnimalTest, KMP_NotFound) {
+    const char* text = "dogcatparrot";
+    const char* pattern = "bird";
+    bool result = KMPcontains(text, pattern);
+    EXPECT_FALSE(result);
+}
+
+
+TEST_F(StrayAnimalTest, AddStrayAnimal_And_ListStrayAnimals) {
+    addStrayAnimalToList(&strayList, "Cat", "Female", "01/01/2023", 2);
+    addStrayAnimalToList(&strayList, "Dog", "Male", "02/01/2023", 3);
+
+    int count = 0;
+    for (StrayAnimal* cur = strayList; cur != nullptr; cur = cur->next) {
+        count++;
+    }
+    EXPECT_EQ(count, 2);
+
+    listStrayAnimals(strayList);
+}
+
+TEST_F(StrayAnimalTest, SearchStrayAnimalsKMP_ShouldFindCorrectAnimal) {
+    addStrayAnimalToList(&strayList, "Cat", "Female", "01/01/2023", 2);
+    addStrayAnimalToList(&strayList, "Dog", "Male", "02/01/2023", 3);
+
+    searchStrayAnimalsKMP(strayList, "Cat");
+    searchStrayAnimalsKMP(strayList, "Parrot");
+}
+
+
+TEST_F(StrayAnimalTest, UpdateStrayAnimal_Success) {
+    addStrayAnimalToList(&strayList, "Dog", "Male", "01/01/2023", 3);
+    int originalID = strayList->id;
+
+    updateStrayAnimal(
+        strayList,
+        originalID,
+        "Cat",           // newType
+        "Female",        // newGender
+        "02/02/2023",    // newArrivalDate
+        5                // newAge
+    );
+
+    EXPECT_STREQ(strayList->type, "Cat");
+    EXPECT_STREQ(strayList->gender, "Female");
+    EXPECT_STREQ(strayList->arrivalDate, "02/02/2023");
+    EXPECT_EQ(strayList->age, 5);
+}
+
+
+TEST_F(StrayAnimalTest, UpdateStrayAnimal_IdNotFound) {
+    addStrayAnimalToList(&strayList, "Cat", "Female", "01/01/2023", 2);
+    addStrayAnimalToList(&strayList, "Dog", "Male", "02/02/2023", 4);
+
+    updateStrayAnimal(
+        strayList,
+        999,
+        "Rabbit",
+        "Female",
+        "05/05/2023",
+        1
+    );
+
+    StrayAnimal* first = strayList;
+    StrayAnimal* second = strayList->next;
+
+    ASSERT_NE(first, nullptr);
+    EXPECT_STREQ(first->type, "Cat");
+    EXPECT_STREQ(first->gender, "Female");
+    EXPECT_STREQ(first->arrivalDate, "01/01/2023");
+    EXPECT_EQ(first->age, 2);
+
+    ASSERT_NE(second, nullptr);
+    EXPECT_STREQ(second->type, "Dog");
+    EXPECT_STREQ(second->gender, "Male");
+    EXPECT_STREQ(second->arrivalDate, "02/02/2023");
+    EXPECT_EQ(second->age, 4);
+}
+
+TEST_F(StrayAnimalTest, DeleteStrayAnimal_ShouldRemoveFromList) {
+    addStrayAnimalToList(&strayList, "Cat", "Female", "01/01/2023", 2);
+    addStrayAnimalToList(&strayList, "Dog", "Male", "02/01/2023", 3);
+
+    int firstID = strayList->id;
+    int secondID = strayList->next->id;
+
+    deleteStrayAnimal(&strayList, firstID);
+
+    int count = 0;
+    StrayAnimal* cur = strayList;
+    while (cur) {
+        count++;
+        EXPECT_NE(cur->id, firstID);
+        cur = cur->next;
+    }
+    EXPECT_EQ(count, 1);
+
+    EXPECT_EQ(strayList->id, secondID);
+}
+
+
+
+TEST_F(StrayAnimalTest, SaveAndLoadStrayAnimals) {
+    addStrayAnimalToList(&strayList, "Cat", "Female", "01/01/2023", 2);
+    addStrayAnimalToList(&strayList, "Dog", "Male", "02/02/2023", 3);
+
+    saveStrayAnimalsToFile(strayList, TEST_ADOPTABLE_FILE);
+
+    while (strayList) {
+        StrayAnimal* temp = strayList;
+        strayList = strayList->next;
+        free(temp);
+    }
+
+    loadStrayAnimalsFromFile(&strayList, TEST_ADOPTABLE_FILE);
+
+    int count = 0;
+    for (StrayAnimal* cur = strayList; cur; cur = cur->next) {
+        count++;
+    }
+    EXPECT_EQ(count, 2);
+
+    bool foundCat = false;
+    bool foundDog = false;
+    for (StrayAnimal* cur = strayList; cur; cur = cur->next) {
+        if (strcmp(cur->type, "Cat") == 0) foundCat = true;
+        if (strcmp(cur->type, "Dog") == 0) foundDog = true;
+    }
+    EXPECT_TRUE(foundCat);
+    EXPECT_TRUE(foundDog);
+}
+
+
+
+
+TEST_F(StrayAnimalTest, SaveAndLoadAdoptedAnimals) {
+
+    AdoptedAnimal an;
+    an.id = 1001;
+    strcpy(an.type, "Cat");
+    strcpy(an.gender, "Female");
+    strcpy(an.arrivalDate, "01/01/2023");
+    an.age = 2;
+    strcpy(an.owner, "TestUser");
+    strcpy(an.adoptionDate, "05/02/2023");
+
+    AdoptedAnimal* node = (AdoptedAnimal*)malloc(sizeof(AdoptedAnimal));
+    memcpy(node, &an, sizeof(AdoptedAnimal));
+    node->next = nullptr;
+    adoptedList = node;
+
+    saveAdoptedAnimalsToFile(adoptedList, TEST_ADOPTED_FILE);
+
+    free(adoptedList);
+    adoptedList = nullptr;
+
+    loadAdoptedAnimalsFromFile(&adoptedList, TEST_ADOPTED_FILE);
+
+
+    ASSERT_NE(adoptedList, nullptr);
+    EXPECT_EQ(adoptedList->id, 1001);
+    EXPECT_STREQ(adoptedList->type, "Cat");
+    EXPECT_STREQ(adoptedList->owner, "TestUser");
+    EXPECT_STREQ(adoptedList->adoptionDate, "05/02/2023");
+}
+
+
+TEST_F(StrayAnimalTest, ListAllAdoptedAnimals) {
+    listAllAdoptedAnimals(adoptedList);
+    SUCCEED();
+
+    AdoptedAnimal an;
+    an.id = 1002;
+    strcpy(an.type, "Dog");
+    strcpy(an.gender, "Male");
+    strcpy(an.arrivalDate, "02/03/2023");
+    an.age = 3;
+    strcpy(an.owner, "TestUser");
+    strcpy(an.adoptionDate, "07/03/2023");
+
+    AdoptedAnimal* node = (AdoptedAnimal*)malloc(sizeof(AdoptedAnimal));
+    memcpy(node, &an, sizeof(AdoptedAnimal));
+    node->next = nullptr;
+
+    adoptedList = node;
+
+    listAllAdoptedAnimals(adoptedList);
+    SUCCEED();
+}
+
+
+TEST(LoadBirthdaysTest, BasicLoad) {
+    const char* testFilename = "test_birthdays.dat";
+
+
+    BPlusTree* originalTree = createBPlusTree();
+    Pet* originalPetList = nullptr;
+
+    addPet(&originalPetList, "Tom", "Cat", 3, "Alice");
+    insertBirthday(originalTree, "Tom", 12, 5, 2024);
+
+    addPet(&originalPetList, "Rex", "Dog", 5, "Bob");
+    insertBirthday(originalTree, "Rex", 1, 12, 2023);
+
+    addPet(&originalPetList, "Nemo", "Fish", 1, "Charlie");
+    insertBirthday(originalTree, "Nemo", 31, 3, 2025);
+
+    saveBirthdaysToFile(originalTree, testFilename, originalPetList);
+
+    BPlusTree* loadedTree = createBPlusTree();
+    Pet* loadedPetList = nullptr;
+
+    loadBirthdaysFromFile(loadedTree, testFilename, &loadedPetList);
+
+
+
+    Pet* foundTom = findPetByName(loadedPetList, hashFunction("Tom"));
+    ASSERT_NE(foundTom, nullptr) << "Tom pet'i yüklenemedi!";
+    EXPECT_STREQ(foundTom->name, "Tom");
+    EXPECT_STREQ(foundTom->type, "Cat");
+    EXPECT_EQ(foundTom->age, 3);
+    EXPECT_STREQ(foundTom->owner, "Alice");
+
+    Pet* foundRex = findPetByName(loadedPetList, hashFunction("Rex"));
+    ASSERT_NE(foundRex, nullptr) << "Rex pet'i yüklenemedi!";
+    EXPECT_STREQ(foundRex->name, "Rex");
+    EXPECT_STREQ(foundRex->type, "Dog");
+    EXPECT_EQ(foundRex->age, 5);
+    EXPECT_STREQ(foundRex->owner, "Bob");
+
+    // "Nemo" kontrolü
+    Pet* foundNemo = findPetByName(loadedPetList, hashFunction("Nemo"));
+    ASSERT_NE(foundNemo, nullptr) << "Nemo pet'i yüklenemedi!";
+    EXPECT_STREQ(foundNemo->name, "Nemo");
+    EXPECT_STREQ(foundNemo->type, "Fish");
+    EXPECT_EQ(foundNemo->age, 1);
+    EXPECT_STREQ(foundNemo->owner, "Charlie");
+
+    std::remove(testFilename);
+
+
+}
+
+
+
+static StrayAnimal* createStrayAnimal(int id, const char* type, const char* gender, const char* arrivalDate, int age) {
+    StrayAnimal* animal = (StrayAnimal*)malloc(sizeof(StrayAnimal));
+    animal->id = id;
+    strcpy(animal->type, type);
+    strcpy(animal->gender, gender);
+    strcpy(animal->arrivalDate, arrivalDate);
+    animal->age = age;
+    animal->next = nullptr;
+    return animal;
+}
+
+// Adopted listede bir hayvan ID'sini aramak için küçük bir yardımcı fonksiyon
+static bool findAdoptedAnimal(AdoptedAnimal* list, int id) {
+    while (list) {
+        if (list->id == id) {
+            return true;
+        }
+        list = list->next;
+    }
+    return false;
+}
+
+// Basit test: Listedeki tek hayvanı başarıyla sahiplenme senaryosu
+TEST(AdoptStrayAnimalTest, BasicAdoptionFlow) {
+    // 1) StrayAnimal listesinde tek hayvan olsun (ID=1)
+    StrayAnimal* strayList = createStrayAnimal(1, "Dog", "Male", "12/12/2023", 2);
+
+    // 2) Fonksiyona vereceğimiz parametreler
+    //    chosenID=1, newName="Fluffy", adoptionDate="01/01/2024"
+    int chosenID = 1;
+    const char* newName = "Fluffy";
+    const char* adoptionDate = "01/01/2024";
+    const char* activeUser = "TestUser";
+
+    // 3) Fonksiyonu çağır
+    adoptStrayAnimal(&strayList, activeUser, chosenID, newName, adoptionDate);
+
+    // 4) Artık strayList boş (nullptr) olmalı (çünkü ID=1 hayvan sahiplenildi)
+    EXPECT_EQ(strayList, nullptr)
+        << "Stray list should be empty after adopting the only animal with ID=1.";
+
+    // 5) adopted.dat dosyasını tekrar yükleyip, ID=1 hayvanın varlığını kontrol edelim
+    AdoptedAnimal* adoptedList = nullptr;
+    loadAdoptedAnimalsFromFile(&adoptedList, "adopted.dat");
+
+    EXPECT_TRUE(findAdoptedAnimal(adoptedList, 1))
+        << "Adopted animal with ID=1 not found in adoptedList!";
+
+    // (Opsiyonel) adoptedList'i test sonunda free edebilirsiniz.
+    // Normal projede bu veriyi tutmaya devam edebilirsiniz.
+}
+
+// İkinci test: Listede olmayan bir ID ile çağrı yapıldığında hayvan bulunamaması durumu
+TEST(AdoptStrayAnimalTest, NonExistentID) {
+    StrayAnimal* strayList = createStrayAnimal(1, "Cat", "Female", "10/10/2023", 1);
+
+    int chosenID = 999;
+    const char* newName = "Kitty";
+    const char* adoptionDate = "02/02/2024";
+    const char* activeUser = "TestUser";
+
+    adoptStrayAnimal(&strayList, activeUser, chosenID, newName, adoptionDate);
+
+    EXPECT_NE(strayList, nullptr)
+        << "Stray list should remain unchanged if the chosen ID is not found.";
+
+    AdoptedAnimal* adoptedList = nullptr;
+    loadAdoptedAnimalsFromFile(&adoptedList, "adopted.dat");
+
+    EXPECT_FALSE(findAdoptedAnimal(adoptedList, 999))
+        << "Adopted animal with ID=999 should not exist in adoptedList!";
+
+}
+
+
+TEST_F(BPlusTreeTest, ListPetBirthdays_BasicFunctionality) {
+    // 1. Pet listesini oluştur ve hayvanlar ekle
+    addPet(&petList, "Tom", "Cat", 3, "Alice");
+    addPet(&petList, "Rex", "Dog", 5, "Bob");
+    addPet(&petList, "Nemo", "Fish", 1, "Charlie");
+
+    // 2. B+ ağacına doğum günlerini ekle
+    insertBirthday(tree, "Tom", 12, 5, 2024);    // 20240512
+    insertBirthday(tree, "Rex", 1, 12, 2023);    // 20231201
+    insertBirthday(tree, "Nemo", 31, 3, 2025);   // 20250331
+
+    // 3. Beklenen çıktıyı oluştur
+    std::string expectedOutput = "\n--- List of Pet Birthdays ---\n";
+    expectedOutput += "Pet Name: Tom | Type: Cat | Owner: Alice | Birthday: 12/05/2024\n";
+    expectedOutput += "Pet Name: Rex | Type: Dog | Owner: Bob | Birthday: 01/12/2023\n";
+    expectedOutput += "Pet Name: Nemo | Type: Fish | Owner: Charlie | Birthday: 31/03/2025\n";
+    expectedOutput += "--------------------------------\n";
+
+    // 4. Stdout'u yakalamaya başla
+    testing::internal::CaptureStdout();
+
+    // 5. Fonksiyonu çağır
+    listPetBirthdays(tree, petList);
+
+    // 6. Yakalanan çıktıyı al
+    std::string actualOutput = testing::internal::GetCapturedStdout();
+
+    // 7. Beklenen ve gerçek çıktıyı karşılaştır
+    EXPECT_EQ(actualOutput, expectedOutput);
+}
+
+
