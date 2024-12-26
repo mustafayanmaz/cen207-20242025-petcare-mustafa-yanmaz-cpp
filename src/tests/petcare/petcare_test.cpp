@@ -477,13 +477,16 @@ TEST(CancelAppointmentTest, CancelValidAppointment) {
 }
 
 // Test: cancelAppointment - Bulunamayan randevu
+// Test: cancelAppointment - Bulunamayan randevu
 TEST(CancelAppointmentTest, CancelAppointmentNotFoundError) {
     resetData();
+    addPet(&petList, "Buddy", "Dog", 3, "Alice"); // Pet ekleniyor
     testing::internal::CaptureStdout();
     ASSERT_FALSE(cancelAppointment("Buddy", 15, 12, "Alice"));
     std::string output = testing::internal::GetCapturedStdout();
     EXPECT_TRUE(output.find("No matching appointment found") != std::string::npos);
 }
+
 
 // Test: viewAppointments
 TEST(ViewAppointmentsTest, DisplayAppointments) {
