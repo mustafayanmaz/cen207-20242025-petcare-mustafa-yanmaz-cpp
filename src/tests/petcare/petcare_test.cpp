@@ -1,49 +1,72 @@
-﻿#include <gtest/gtest.h>
+﻿/**
+* @file petcare_test.cpp
+*/
+
+#include <gtest/gtest.h>
 #include "petcare.h"
 #include <sstream>
-#include <cstdio> // For file operations
+#include <cstdio> 
 #include "methods.h"
 #include <string>
 
-
-// Fixture class for setting up a HashTable before each test
+/**
+ * @class UserAuthTest
+ * @brief Test fixture for user authentication tests.
+ */
 class UserAuthTest : public ::testing::Test {
 protected:
+    /**
+     * @brief Hash table pointer for user-related data.
+     */
     HashTable* table;
 
+    /**
+     * @brief Initializes resources before each user authentication test.
+     */
     void SetUp() override {
         table = createHashTable();
     }
 
+    /**
+     * @brief Cleans up resources after each user authentication test.
+     */
     void TearDown() override {
         freeHashTable(table);
     }
 };
 
-// Test user registration
+/**
+ * @brief Verifies that a user can be successfully registered.
+ */
 TEST_F(UserAuthTest, RegisterUser) {
     addUser(table, "testuser", "password123");
     ASSERT_EQ(authenticateUser(table, "testuser", "password123"), 1) << "User should be able to login after registration.";
 }
 
-// Test login with incorrect password
+/**
+ * @brief Tests that login fails when an incorrect password is provided.
+ */
 TEST_F(UserAuthTest, LoginIncorrectPassword) {
     addUser(table, "testuser", "password123");
     ASSERT_EQ(authenticateUser(table, "testuser", "wrongpassword"), 0) << "Login should fail for incorrect password.";
 }
 
-// Test login with non-existent user
+/**
+ * @brief Tests that login fails for a user that does not exist.
+ */
 TEST_F(UserAuthTest, LoginNonExistentUser) {
     ASSERT_EQ(authenticateUser(table, "nonexistentuser", "password123"), 0) << "Login should fail for non-existent user.";
 }
 
+/**
+ * @brief Ensures that users can be saved to a file and loaded correctly.
+ */
 TEST_F(UserAuthTest, SaveAndLoadUsers) {
     addUser(table, "testuser1", "password123");
     addUser(table, "testuser2", "mypassword");
 
     saveUsersToFile(table, "test_users.dat");
 
-    // Create a new hash table and load users from file
     HashTable* loadedTable = createHashTable();
     loadUsersFromFile(loadedTable, "test_users.dat");
 
@@ -53,8 +76,9 @@ TEST_F(UserAuthTest, SaveAndLoadUsers) {
     freeHashTable(loadedTable);
 }
 
-
-// Test handling of duplicate user registration
+/**
+ * @brief Checks behavior when attempting to register a user with a duplicate username.
+ */
 TEST_F(UserAuthTest, DuplicateUserRegistration) {
     addUser(table, "duplicateuser", "password123");
     addUser(table, "duplicateuser", "newpassword");
@@ -62,32 +86,42 @@ TEST_F(UserAuthTest, DuplicateUserRegistration) {
     ASSERT_EQ(authenticateUser(table, "duplicateuser", "newpassword"), 0) << "New password should not overwrite existing user.";
 }
 
-// Test encryptPassword function
+/**
+ * @brief Verifies that password encryption and decryption behave as expected.
+ */
 TEST_F(UserAuthTest, EncryptPassword) {
     const char* password = "testpassword";
     char* encrypted = encryptPassword(password);
     ASSERT_STRNE(password, encrypted) << "Encrypted password should not be the same as the original.";
-    char* decrypted = encryptPassword(encrypted); // XOR decryption
+    char* decrypted = encryptPassword(encrypted);
     ASSERT_STREQ(password, decrypted) << "Decrypting the encrypted password should return the original password.";
     free(encrypted);
     free(decrypted);
 }
+
+/**
+ * @class PetManagementTest
+ * @brief Test fixture for pet management functionality.
+ */
 class PetManagementTest : public ::testing::Test {
 protected:
+    /**
+     * @brief Head pointer to a linked list of pets.
+     */
     Pet* petList = nullptr;
 
-    void SetUp() override {
-        // Test başlamadan önce gerekli ayarlar
-    }
-
+    /**
+     * @brief Performs cleanup after each test.
+     */
     void TearDown() override {
-        // Test bittikten sonra belleği temizle
         freePetList(petList);
         petList = nullptr;
     }
 };
 
-// Test: addPet Fonksiyonu
+/**
+ * @brief Validates that adding a pet creates a new entry in the pet list.
+ */
 TEST_F(PetManagementTest, AddPetAddsNewPetToList) {
     addPet(&petList, "Buddy", "Dog", 3, "Alice");
     ASSERT_NE(petList, nullptr);
@@ -97,28 +131,9 @@ TEST_F(PetManagementTest, AddPetAddsNewPetToList) {
     EXPECT_STREQ(petList->owner, "Alice");
 }
 
-// Test: updatePet Fonksiyonu
-
-/*
-TEST_F(PetManagementTest, UpdatePet_Success) {
-
-    addPet(&petList, "Bella", "Dog", 3, "Mustafa");
-
-
-    testing::internal::CaptureStdout();
-    const char* name = "Bella";
-    const char* owner = "Mustafa";
-
-
-    std::stringstream input("Luna\nDog\n4\n");
-    std::cin.rdbuf(input.rdbuf());
-
-    updatePet(petList, name, owner);
-    std::string output = testing::internal::GetCapturedStdout();
-
-    EXPECT_TRUE(output.find("Pet updated successfully.") != std::string::npos);
-}*/
-
+/**
+ * @brief Tests that an update attempt fails when the pet is not found.
+ */
 TEST_F(PetManagementTest, UpdatePet_Failure_NotFound) {
     testing::internal::CaptureStdout();
     updatePet(petList, "Nonexistent", "Mustafa");
@@ -127,8 +142,10 @@ TEST_F(PetManagementTest, UpdatePet_Failure_NotFound) {
     EXPECT_TRUE(output.find("Pet not found or you do not have permission to update this pet.") != std::string::npos);
 }
 
+/**
+ * @brief Tests that an update attempt fails if the user does not own the pet.
+ */
 TEST_F(PetManagementTest, UpdatePet_Failure_PermissionDenied) {
-    // Gerekli ön hazırlık
     addPet(&petList, "Milo", "Cat", 2, "Ahmet");
 
     testing::internal::CaptureStdout();
@@ -138,18 +155,19 @@ TEST_F(PetManagementTest, UpdatePet_Failure_PermissionDenied) {
     EXPECT_TRUE(output.find("Pet not found or you do not have permission to update this pet.") != std::string::npos);
 }
 
-
-
-
-// Test: deletePet Fonksiyonu
+/**
+ * @brief Verifies that the correct pet is removed from the list.
+ */
 TEST_F(PetManagementTest, DeletePetRemovesCorrectPet) {
     addPet(&petList, "Buddy", "Dog", 3, "Alice");
     deletePet(&petList, "Buddy", "Alice");
 
-    EXPECT_EQ(petList, nullptr); // Liste boş olmalı
+    EXPECT_EQ(petList, nullptr);
 }
 
-// Test: savePetsToFile ve loadPetsFromFile Fonksiyonları
+/**
+ * @brief Ensures that pet data can be saved to a file and loaded correctly.
+ */
 TEST_F(PetManagementTest, SaveAndLoadPets) {
     addPet(&petList, "Buddy", "Dog", 3, "Alice");
     addPet(&petList, "Kitty", "Cat", 2, "Bob");
@@ -159,14 +177,12 @@ TEST_F(PetManagementTest, SaveAndLoadPets) {
     Pet* loadedPets = nullptr;
     loadPetsFromFile(&loadedPets, "pets_test.dat");
 
-    // İlk pet'i kontrol et
     ASSERT_NE(loadedPets, nullptr);
     EXPECT_STREQ(loadedPets->name, "Buddy");
     EXPECT_STREQ(loadedPets->type, "Dog");
     EXPECT_EQ(loadedPets->age, 3);
     EXPECT_STREQ(loadedPets->owner, "Alice");
 
-    // İkinci pet'i kontrol et
     ASSERT_NE(loadedPets->next, nullptr);
     EXPECT_STREQ(loadedPets->next->name, "Kitty");
     EXPECT_STREQ(loadedPets->next->type, "Cat");
@@ -176,31 +192,27 @@ TEST_F(PetManagementTest, SaveAndLoadPets) {
     freePetList(loadedPets);
 }
 
-// Test: freePetList Fonksiyonu
+/**
+ * @brief Verifies the freeing of all allocated pet nodes.
+ */
 TEST_F(PetManagementTest, FreePetList) {
-    // Pet listesi oluşturma
     Pet* petList = NULL;
 
     addPet(&petList, "Bella", "Dog", 3, "Mustafa");
     addPet(&petList, "Luna", "Cat", 2, "Ali");
     addPet(&petList, "Max", "Rabbit", 1, "Ahmet");
 
-    // Listeye erişilebilirlik kontrolü
     ASSERT_NE(petList, nullptr);
     ASSERT_NE(petList->next, nullptr);
 
-    // Listeyi serbest bırak
     freePetList(petList);
 
-    // Bellek serbest bırakıldıktan sonra listeye erişimi test etme
-    // Belleğe erişmeye çalışmamalıyız. Bunun yerine, sadece işlem sonrası bir problem olmamasını garanti edeceğiz.
-    // Eğer freePetList düzgün çalışıyorsa, aşağıdaki kodda bellek ihlali (segmentation fault) olmamalıdır.
-    SUCCEED();  // Eğer bu noktaya kadar hata çıkmazsa test başarılıdır.
+    SUCCEED();
 }
 
-
-
-// Test için örnek veriler oluşturma
+/**
+ * @brief Array of PetInfo objects for testing sorting and heap operations.
+ */
 PetInfo pets[] = {
     {"Charlie", "Dog", 3, "Alice"},
     {"Bella", "Cat", 2, "Bob"},
@@ -208,7 +220,12 @@ PetInfo pets[] = {
     {"Daisy", "Rabbit", 1, "David"}
 };
 
-// Yardımcı fonksiyon: Dizi elemanlarını karşılaştırır
+/**
+ * @brief Checks if an array of PetInfo structures is sorted by pet name.
+ * @param arr The array of PetInfo to check.
+ * @param n The number of elements in the array.
+ * @return True if sorted by name in ascending order, false otherwise.
+ */
 bool isSorted(PetInfo arr[], int n) {
     for (int i = 0; i < n - 1; i++) {
         if (strcmp(arr[i].name, arr[i + 1].name) > 0) {
@@ -218,7 +235,9 @@ bool isSorted(PetInfo arr[], int n) {
     return true;
 }
 
-// heapify fonksiyonunu test etme
+/**
+ * @brief Tests the heapify function to ensure the heap property is maintained.
+ */
 TEST(HeapifyTest, MaintainsHeapProperty) {
     PetInfo testArr[] = {
         {"Charlie", "Dog", 3, "Alice"},
@@ -228,12 +247,13 @@ TEST(HeapifyTest, MaintainsHeapProperty) {
     int n = 3;
     heapify(testArr, n, 0);
 
-    // Max heap property: root >= children
     EXPECT_GE(strcmp(testArr[0].name, testArr[1].name), 0);
     EXPECT_GE(strcmp(testArr[0].name, testArr[2].name), 0);
 }
 
-// heapSort fonksiyonunu test etme
+/**
+ * @brief Tests the heap sort function to verify that pets are sorted by name.
+ */
 TEST(HeapSortTest, SortsPetsByName) {
     PetInfo testArr[] = {
         {"Charlie", "Dog", 3, "Alice"},
@@ -244,25 +264,25 @@ TEST(HeapSortTest, SortsPetsByName) {
     int n = 4;
     heapSort(testArr, n);
 
-    // Test dizinin sıralı olup olmadığını
     EXPECT_TRUE(isSorted(testArr, n));
 }
 
-// listAllPets fonksiyonunu test etme
+/**
+ * @brief Checks that listing all pets outputs them in sorted order by name.
+ */
 TEST(ListAllPetsTest, OutputsSortedPetList) {
+
     Pet* petList = NULL;
 
-    // Test verilerini petList'e ekleme
     addPet(&petList, "Charlie", "Dog", 3, "Alice");
     addPet(&petList, "Bella", "Cat", 2, "Bob");
     addPet(&petList, "Max", "Parrot", 5, "Carol");
     addPet(&petList, "Daisy", "Rabbit", 1, "David");
 
-    testing::internal::CaptureStdout(); // Konsol çıktısını yakala
+    testing::internal::CaptureStdout(); 
     listAllPets(petList);
     std::string output = testing::internal::GetCapturedStdout();
 
-    // Beklenen çıktı
     std::string expectedOutput =
         "List of All Pets (Sorted by Name):\n"
         "Name: Bella, Type: Cat, Age: 2, Owner: Bob\n"
@@ -270,16 +290,15 @@ TEST(ListAllPetsTest, OutputsSortedPetList) {
         "Name: Daisy, Type: Rabbit, Age: 1, Owner: David\n"
         "Name: Max, Type: Parrot, Age: 5, Owner: Carol\n";
 
-    // Test konsol çıktısı doğru mu
     EXPECT_EQ(output, expectedOutput);
 
-    // Belleği serbest bırakma
     freePetList(petList);
 }
 
-
-
-// Test Set Up: Bir örnek pet listesi oluştur
+/**
+ * @brief Creates a sample doubly linked list of pets for testing.
+ * @return A pointer to the head of the created pet list.
+ */
 Pet* createSamplePetList() {
     Pet* pet1 = (Pet*)malloc(sizeof(Pet));
     pet1->name = strdup("Buddy");
@@ -310,7 +329,9 @@ Pet* createSamplePetList() {
     return pet1;
 }
 
-// Test: BFS Search - Bulunan sonuç
+/**
+ * @brief Tests BFS search for pets by name.
+ */
 TEST(BFSSearchTest, SearchByName) {
     Pet* petList = createSamplePetList();
     testing::internal::CaptureStdout();
@@ -320,7 +341,9 @@ TEST(BFSSearchTest, SearchByName) {
     freePetList(petList);
 }
 
-// Test: BFS Search - Bulunamayan sonuç
+/**
+ * @brief Tests BFS search when the pet name does not exist.
+ */
 TEST(BFSSearchTest, SearchByNameNotFound) {
     Pet* petList = createSamplePetList();
     testing::internal::CaptureStdout();
@@ -330,7 +353,9 @@ TEST(BFSSearchTest, SearchByNameNotFound) {
     freePetList(petList);
 }
 
-// Test: DFS Search - Bulunan sonuç
+/**
+ * @brief Tests DFS search for pets by type.
+ */
 TEST(DFSSearchTest, SearchByType) {
     Pet* petList = createSamplePetList();
     testing::internal::CaptureStdout();
@@ -340,7 +365,9 @@ TEST(DFSSearchTest, SearchByType) {
     freePetList(petList);
 }
 
-// Test: DFS Search - Bulunamayan sonuç
+/**
+ * @brief Tests DFS search when the pet type does not exist.
+ */
 TEST(DFSSearchTest, SearchByTypeNotFound) {
     Pet* petList = createSamplePetList();
     testing::internal::CaptureStdout();
@@ -350,7 +377,9 @@ TEST(DFSSearchTest, SearchByTypeNotFound) {
     freePetList(petList);
 }
 
-// Test: Boş liste kontrolü (Hem BFS hem DFS)
+/**
+ * @brief Verifies behavior of BFS and DFS searches on an empty pet list.
+ */
 TEST(SearchTest, EmptyList) {
     Pet* emptyList = NULL;
     testing::internal::CaptureStdout();
@@ -363,15 +392,18 @@ TEST(SearchTest, EmptyList) {
     std::string dfsOutput = testing::internal::GetCapturedStdout();
     EXPECT_NE(dfsOutput.find("The pet list is empty."), std::string::npos);
 }
+/**
+ * @brief Pet list pointer for holding pets in some tests.
+ */
+Pet* petList = NULL;     
+/**
+ * @brief Appointment list pointer for scheduling appointments.
+ */
+Appointment* appointmentList = NULL; 
 
-
-
-
-
-Pet* petList = NULL;            // Pet listesi
-Appointment* appointmentList = NULL; // Appointment listesi
-
-// Test başlangıcı için setup
+/**
+ * @brief Resets the global pet list and appointment list data.
+ */
 void resetData() {
     freePetList(petList);
     petList = NULL;
@@ -390,29 +422,9 @@ void resetData() {
     appointmentList = NULL;
 }
 
-// Test: addAppointment fonksiyonu
-
-/*TEST(AddAppointmentTest, AddValidAppointment) {
-    resetData(); // Test başlangıcında veriyi sıfırla
-    addPet(&petList, "Buddy", "Dog", 3, "Alice"); // Pet ekle
-
-    // Randevu ekle ve çıktı kontrolü
-    testing::internal::CaptureStdout();
-    addAppointment("Buddy", "Checkup", 15, 12, "Alice", petList);
-    std::string output = testing::internal::GetCapturedStdout();
-
-    // Beklenen sonuçları doğrula
-    ASSERT_NE(appointmentList, nullptr) << "Appointment list should not be null after adding a valid appointment.";
-    //    EXPECT_STREQ(appointmentList->petName, "Buddy") << "Pet name should match.";
-    //    EXPECT_STREQ(appointmentList->description, "Checkup") << "Appointment description should match.";
-    //    EXPECT_EQ(appointmentList->day, 15) << "Day should match.";
-    //    EXPECT_EQ(appointmentList->month, 12) << "Month should match.";
-    EXPECT_TRUE(output.find("Appointment added successfully.") == std::string::npos) << "Success message should be displayed.";
-}*/
-
-
-
-// Test: addAppointment - Tarih çakışması
+/**
+ * @brief Tests adding an appointment on a date that is already taken.
+ */
 TEST(AddAppointmentTest, AddDuplicateDateError) {
     resetData();
     addPet(&petList, "Buddy", "Dog", 3, "Alice");
@@ -424,7 +436,9 @@ TEST(AddAppointmentTest, AddDuplicateDateError) {
     EXPECT_TRUE(output.find("Error: The date 15/12 is already occupied.") != std::string::npos);
 }
 
-// Test: addAppointment - Yetkisiz kullanıcı
+/**
+ * @brief Tests adding an appointment for a user who does not own the pet.
+ */
 TEST(AddAppointmentTest, AddUnauthorizedUserError) {
     resetData();
     addPet(&petList, "Buddy", "Dog", 3, "Alice");
@@ -435,29 +449,22 @@ TEST(AddAppointmentTest, AddUnauthorizedUserError) {
     EXPECT_TRUE(output.find("Error: You do not own a pet named 'Buddy'.") != std::string::npos);
 }
 
-
-// Test: updateAppointment - Başarılı
-//
+/**
+ * @brief Tests updating an existing appointment with valid inputs.
+ */
 TEST(UpdateAppointmentTest, UpdateValidAppointment) {
-    resetData(); // Test başlangıcında veriyi sıfırla
-    addPet(&petList, "Buddy", "Dog", 3, "Alice"); // Pet ekle
+    resetData();
+    addPet(&petList, "Buddy", "Dog", 3, "Alice");
 
-    // Eski randevuyu ekle
     addAppointment("Buddy", "Checkup", 15, 12, "Alice", petList);
 
-    // Randevuyu güncelle ve sonucu kontrol et
     bool updateResult = updateAppointment("Buddy", 15, 12, 16, 12, "Vaccination", "Alice");
     ASSERT_TRUE(updateResult) << "Appointment update should return true for valid inputs.";
-
-    // Güncellenen randevuyu kontrol et
-  //  EXPECT_EQ(appointmentList->day, 16) << "Updated appointment day should match.";
- //   EXPECT_EQ(appointmentList->month, 12) << "Updated appointment month should match.";
-   // EXPECT_STREQ(appointmentList->description, "Vaccination") << "Updated appointment description should match.";
 }
 
-
-
-// Test: updateAppointment - Hatalı
+/**
+ * @brief Tests updating an appointment that does not exist.
+ */
 TEST(UpdateAppointmentTest, UpdateAppointmentNotFoundError) {
     resetData();
     testing::internal::CaptureStdout();
@@ -466,7 +473,9 @@ TEST(UpdateAppointmentTest, UpdateAppointmentNotFoundError) {
     EXPECT_TRUE(output.find("Error: No matching appointment found") == std::string::npos);
 }
 
-// Test: cancelAppointment - Başarılı
+/**
+ * @brief Tests cancellation of a valid appointment.
+ */
 TEST(CancelAppointmentTest, CancelValidAppointment) {
     resetData();
     addPet(&petList, "Buddy", "Dog", 3, "Alice");
@@ -476,19 +485,22 @@ TEST(CancelAppointmentTest, CancelValidAppointment) {
     EXPECT_EQ(appointmentList, nullptr);
 }
 
-// Test: cancelAppointment - Bulunamayan randevu
-// Test: cancelAppointment - Bulunamayan randevu
+/**
+ * @brief Tests canceling an appointment that does not exist.
+ */
+
 TEST(CancelAppointmentTest, CancelAppointmentNotFoundError) {
     resetData();
-    addPet(&petList, "Buddy", "Dog", 3, "Alice"); // Pet ekleniyor
+    addPet(&petList, "Buddy", "Dog", 3, "Alice");
     testing::internal::CaptureStdout();
     ASSERT_FALSE(cancelAppointment("Buddy", 15, 12, "Alice"));
     std::string output = testing::internal::GetCapturedStdout();
     EXPECT_TRUE(output.find("No matching appointment found") != std::string::npos);
 }
 
-
-// Test: viewAppointments
+/**
+ * @brief Tests viewing appointments for a specific month.
+ */
 TEST(ViewAppointmentsTest, DisplayAppointments) {
     resetData();
     addPet(&petList, "Buddy", "Dog", 3, "Alice");
@@ -504,6 +516,9 @@ TEST(ViewAppointmentsTest, DisplayAppointments) {
     EXPECT_TRUE(output.find("\033[31m 20\033[0m") != std::string::npos);
 }
 
+/**
+ * @brief Tests the XOR pointer helper function for the appointment list.
+ */
 TEST(AppointmentTests, XORHelperTest) {
     Appointment a, b;
     Appointment* result = XOR(&a, &b);
@@ -515,70 +530,52 @@ TEST(AppointmentTests, XORHelperTest) {
     result = XOR(&a, nullptr);
     EXPECT_EQ(result, &a);
 }
-// Test: saveAppointmentsToFile ve loadAppointmentsFromFile
 
-/*
-TEST(SaveLoadAppointmentsTest, SaveAndLoadValidAppointments) {
-    resetData(); // Reset data at the start of the test
-    addPet(&petList, "Buddy", "Dog", 3, "Alice"); // Add a pet
-
-    // Add appointments
-    addAppointment("Buddy", "Checkup", 10, 12, "Alice", petList);
-    addAppointment("Buddy", "Vaccination", 20, 12, "Alice", petList);
-
-    // Save appointments to file
-    saveAppointmentsToFile();
-
-    // Reset memory and load appointments from file
-    ;
-    loadAppointmentsFromFile();
-
-    // Verify the first appointment
-    ASSERT_NE(appointmentList, nullptr) << "Appointment list should not be null after loading from file.";
-    EXPECT_STREQ(appointmentList->petName, "Buddy") << "First appointment pet name should match.";
-    EXPECT_STREQ(appointmentList->description, "Checkup") << "First appointment description should match.";
-    EXPECT_EQ(appointmentList->day, 10) << "First appointment day should match.";
-    EXPECT_EQ(appointmentList->month, 12) << "First appointment month should match.";
-
-    // Verify the second appointment
-    Appointment* nextAppointment = XOR(appointmentList->xorPtr, nullptr);
-    ASSERT_NE(nextAppointment, nullptr) << "Second appointment should exist.";
-    EXPECT_STREQ(nextAppointment->petName, "Buddy") << "Second appointment pet name should match.";
-    EXPECT_STREQ(nextAppointment->description, "Vaccination") << "Second appointment description should match.";
-    EXPECT_EQ(nextAppointment->day, 20) << "Second appointment day should match.";
-    EXPECT_EQ(nextAppointment->month, 12) << "Second appointment month should match.";
-}*/
-
-
-
-
-// Test fixture to initialize and clean up
+/**
+ * @class BPlusTreeTest
+ * @brief Test fixture for B+ tree operations on pet birthdays.
+ */
 class BPlusTreeTest : public ::testing::Test {
 protected:
+    /**
+     * @brief B+ tree for storing and managing pet birthdays.
+     */
     BPlusTree* tree;
+    /**
+     * @brief Pet list pointer used with the B+ tree.
+     */
     Pet* petList;
 
+    /**
+     * @brief Initializes the B+ tree and pet list before each test.
+     */
     void SetUp() override {
         tree = createBPlusTree();
         petList = NULL;
     }
 
+    /**
+     * @brief Frees the pet list and deletes the B+ tree after each test.
+     */
     void TearDown() override {
-        // Free resources
         freePetList(petList);
         delete tree;
     }
 };
 
-// Test: Create a BPlusTree and insert a birthday
+/**
+ * @brief Tests inserting a birthday record into the B+ tree.
+ */
 TEST_F(BPlusTreeTest, InsertBirthday) {
     insertBirthday(tree, "Buddy", 5, 10, 2020);
     ASSERT_NE(tree->root, nullptr);
     EXPECT_EQ(tree->root->keys[0], hashFunction("Buddy"));
-    EXPECT_EQ(tree->root->values[0], 20201005); // Encoded as YYYYMMDD
+    EXPECT_EQ(tree->root->values[0], 20201005); 
 }
 
-// Test: Add pets and check ownership
+/**
+ * @brief Verifies that the correct user ownership of a pet is reported.
+ */
 TEST_F(BPlusTreeTest, CheckPetOwnership) {
     addPet(&petList, "Buddy", "Dog", 3, "John");
     addPet(&petList, "Kitty", "Cat", 2, "Jane");
@@ -587,101 +584,74 @@ TEST_F(BPlusTreeTest, CheckPetOwnership) {
     EXPECT_FALSE(isPetOwnedByUser(petList, "Kitty", "John"));
 }
 
-// Test: Save and load birthdays with encryption
+/**
+ * @brief Tests saving birthdays to a file.
+ */
 TEST_F(BPlusTreeTest, SaveBirthdays) {
     const char* filename = "test_birthdays.data";
 
-    // Add a pet and insert a birthday
     addPet(&petList, "Buddy", "Dog", 3, "John");
     insertBirthday(tree, "Buddy", 5, 10, 2020);
 
-    // Save to file
     saveBirthdaysToFile(tree, filename, petList);
 
-    // Check that the file exists and is non-empty
     FILE* file = fopen(filename, "rb");
-    ASSERT_NE(file, nullptr); // File should exist
+    ASSERT_NE(file, nullptr);
     fseek(file, 0, SEEK_END);
     long fileSize = ftell(file);
     fclose(file);
 
-    EXPECT_GT(fileSize, 0); // File should not be empty
+    EXPECT_GT(fileSize, 0);
 
-    // Clean up
     std::remove(filename);
 }
-/*
-TEST_F(BPlusTreeTest, LoadBirthdays) {
-    const char* filename = "test_birthdays.data";
 
-    // Manually create and save a test file
-    addPet(&petList, "Buddy", "Dog", 3, "John");
-    insertBirthday(tree, "Buddy", 5, 10, 2020);
-    saveBirthdaysToFile(tree, filename, petList);
-
-    // Load from file
-    BPlusTree* loadedTree = createBPlusTree();
-    Pet* loadedPetList = NULL;
-    loadBirthdaysFromFile(loadedTree, filename, &loadedPetList);
-
-    // Verify loaded B+ tree and pet list
-    ASSERT_NE(loadedTree->root, nullptr);  // Ensure root is not NULL
-    EXPECT_EQ(loadedTree->root->keys[0], hashFunction("Buddy"));
-    EXPECT_EQ(loadedTree->root->values[0], 20201005); // Encoded as YYYYMMDD
-
-    EXPECT_TRUE(isPetOwnedByUser(loadedPetList, "Buddy", "John"));
-
-    // Clean up
-    freePetList(loadedPetList);
-    delete loadedTree;
-    std::remove(filename);
-}
-*/
-
-
-// Test: SaveBPlusTreeToFile and LoadBirthdaysFromFile encryption
+/**
+ * @brief Verifies that saved birthday data is encrypted and not in plain text.
+ */
 TEST_F(BPlusTreeTest, EncryptionTest) {
     const char* filename = "test_encrypted_birthdays.data";
 
-    // Add a pet and insert a birthday
     addPet(&petList, "Buddy", "Dog", 3, "John");
     insertBirthday(tree, "Buddy", 15, 8, 2022);
 
-    // Save to file
     saveBirthdaysToFile(tree, filename, petList);
 
-    // Open file and verify it's encrypted
     FILE* file = fopen(filename, "rb");
     ASSERT_NE(file, nullptr);
     char encryptedData[50];
     fread(encryptedData, sizeof(char), 50, file);
     fclose(file);
 
-    // Verify that encrypted data doesn't match plain text
     EXPECT_STRNE(encryptedData, "Buddy");
 
-    // Clean up
     std::remove(filename);
 }
 
-
-
-
-// Test fixture to initialize and clean up
+/**
+ * @class ExerciseRoutineTest
+ * @brief Test fixture for exercise routines managed via a stack.
+ */
 class ExerciseRoutineTest : public ::testing::Test {
 protected:
+    /**
+     * @brief Resets the exercise stack before each exercise routine test.
+     */
     void SetUp() override {
-        // Reset exercise stack before each test
         exerciseStack.top = -1;
     }
 
+    /**
+     * @brief Clears the exercise stack after each exercise routine test.
+     */
     void TearDown() override {
-        // Reset exercise stack after each test
         exerciseStack.top = -1;
     }
 };
 
-// Test: Add an exercise routine successfully
+/**
+ * @brief Tests successfully adding a new exercise routine to the stack.
+ */
 TEST_F(ExerciseRoutineTest, AddExerciseRoutine_Success) {
     addExerciseRoutine("Buddy", "Morning Run");
     EXPECT_EQ(exerciseStack.top, 0);
@@ -689,7 +659,9 @@ TEST_F(ExerciseRoutineTest, AddExerciseRoutine_Success) {
     EXPECT_STREQ(exerciseStack.stack[0].exercise, "Morning Run");
 }
 
-// Test: Add an exercise routine when stack is full
+/**
+ * @brief Tests handling of a full exercise stack.
+ */
 TEST_F(ExerciseRoutineTest, AddExerciseRoutine_FullStack) {
     for (int i = 0; i < MAX_ROUTINES; ++i) {
         addExerciseRoutine("Pet", "Routine");
@@ -703,7 +675,9 @@ TEST_F(ExerciseRoutineTest, AddExerciseRoutine_FullStack) {
     EXPECT_NE(output.find("Error: Stack is full"), std::string::npos);
 }
 
-// Test: List all exercise routines
+/**
+ * @brief Tests listing all exercise routines in the stack.
+ */
 TEST_F(ExerciseRoutineTest, ListAllExercises) {
     addExerciseRoutine("Buddy", "Morning Run");
     addExerciseRoutine("Kitty", "Evening Stretch");
@@ -716,7 +690,9 @@ TEST_F(ExerciseRoutineTest, ListAllExercises) {
     EXPECT_NE(output.find("Pet Name: Kitty\nRoutine: Evening Stretch"), std::string::npos);
 }
 
-// Test: List exercises when stack is empty
+/**
+ * @brief Tests listing routines when the stack is empty.
+ */
 TEST_F(ExerciseRoutineTest, ListAllExercises_EmptyStack) {
     testing::internal::CaptureStdout();
     listAllExercises();
@@ -725,7 +701,9 @@ TEST_F(ExerciseRoutineTest, ListAllExercises_EmptyStack) {
     EXPECT_NE(output.find("No exercise routines available."), std::string::npos);
 }
 
-// Test: Undo the last exercise routine
+/**
+ * @brief Tests undoing (pop) the most recent exercise routine.
+ */
 TEST_F(ExerciseRoutineTest, UndoLastExercise) {
     addExerciseRoutine("Buddy", "Morning Run");
     addExerciseRoutine("Kitty", "Evening Stretch");
@@ -738,7 +716,9 @@ TEST_F(ExerciseRoutineTest, UndoLastExercise) {
     EXPECT_NE(output.find("Undoing last exercise routine for 'Kitty'"), std::string::npos);
 }
 
-// Test: Undo exercise routine when stack is empty
+/**
+ * @brief Tests undo operation on an empty stack.
+ */
 TEST_F(ExerciseRoutineTest, UndoLastExercise_EmptyStack) {
     testing::internal::CaptureStdout();
     undoLastExercise();
@@ -747,26 +727,37 @@ TEST_F(ExerciseRoutineTest, UndoLastExercise_EmptyStack) {
     EXPECT_NE(output.find("Error: No exercise routines to undo."), std::string::npos);
 }
 
-// Test fixture for findPetByName
+/**
+ * @class FindPetByNameTest
+ * @brief Test fixture for the findPetByName function.
+ */
 class FindPetByNameTest : public ::testing::Test {
 protected:
+    /**
+     * @brief Pet list pointer for storing sample pets.
+     */
     Pet* petList = nullptr;
-
+    /**
+     * @brief Adds sample pets to the list before each test.
+     */
     void SetUp() override {
-        // Create a sample pet list
         addPet(&petList, "Buddy", "Dog", 3, "Alice");
         addPet(&petList, "Milo", "Cat", 2, "Bob");
         addPet(&petList, "Charlie", "Bird", 1, "Carol");
     }
 
+    /**
+     * @brief Frees the sample pet list after each test.
+     */
     void TearDown() override {
-        // Clean up the pet list
         freePetList(petList);
         petList = nullptr;
     }
 };
 
-// Test: Find pet by name - Pet found
+/**
+ * @brief Tests that a pet with a given name can be found by its hash key.
+ */
 TEST_F(FindPetByNameTest, FindPetByName_Found) {
     int key = hashFunction("Milo");
     Pet* foundPet = findPetByName(petList, key);
@@ -777,7 +768,9 @@ TEST_F(FindPetByNameTest, FindPetByName_Found) {
     EXPECT_EQ(foundPet->age, 2);
 }
 
-// Test: Find pet by name - Pet not found
+/**
+ * @brief Tests that no pet is found if the hash key does not match.
+ */
 TEST_F(FindPetByNameTest, FindPetByName_NotFound) {
     int key = hashFunction("Unknown");
     Pet* foundPet = findPetByName(petList, key);
@@ -785,7 +778,9 @@ TEST_F(FindPetByNameTest, FindPetByName_NotFound) {
     EXPECT_EQ(foundPet, nullptr);
 }
 
-// Test: Find pet by name - Empty list
+/**
+ * @brief Tests behavior on an empty pet list.
+ */
 TEST_F(FindPetByNameTest, FindPetByName_EmptyList) {
     freePetList(petList);
     petList = nullptr;
@@ -796,17 +791,28 @@ TEST_F(FindPetByNameTest, FindPetByName_EmptyList) {
     EXPECT_EQ(foundPet, nullptr);
 }
 
-// Test fixture for Queue operations
+/**
+ * @class MedicineQueueTest
+ * @brief Test fixture for medicine schedule queue operations.
+ */
 class MedicineQueueTest : public ::testing::Test {
 protected:
+    /**
+     * @brief Queue pointer for managing medicine schedules.
+     */
     Queue* medicineQueue;
 
+    /**
+     * @brief Creates a new medicine queue before each test.
+     */
     void SetUp() override {
-        medicineQueue = createQueue(); // Test başlamadan önce boş bir kuyruk oluştur
+        medicineQueue = createQueue();
     }
 
+    /**
+     * @brief Empties and deallocates the medicine queue after each test.
+     */
     void TearDown() override {
-        // Kuyruk elemanlarını temizle
         while (!isQueueEmpty(medicineQueue)) {
             FeedingSchedule* temp = dequeue(medicineQueue);
             free(temp);
@@ -815,7 +821,9 @@ protected:
     }
 };
 
-// Test: Medicine schedule ekleme
+/**
+ * @brief Tests adding a new medicine schedule to the queue.
+ */
 TEST_F(MedicineQueueTest, AddMedicineSchedule) {
     addMedicineSchedule(medicineQueue, "Buddy", "Morning Medicine");
     ASSERT_FALSE(isQueueEmpty(medicineQueue));
@@ -824,7 +832,9 @@ TEST_F(MedicineQueueTest, AddMedicineSchedule) {
     EXPECT_STREQ(medicineQueue->front->scheduleDetails, "Morning Medicine");
 }
 
-// Test: Medicine schedule güncelleme
+/**
+ * @brief Tests updating the details of an existing medicine schedule.
+ */
 TEST_F(MedicineQueueTest, UpdateMedicineSchedule) {
     addMedicineSchedule(medicineQueue, "Buddy", "Morning Medicine");
 
@@ -833,7 +843,9 @@ TEST_F(MedicineQueueTest, UpdateMedicineSchedule) {
     EXPECT_STREQ(medicineQueue->front->scheduleDetails, "Evening Medicine");
 }
 
-// Test: Medicine schedule güncelleme (Hatalı isim)
+/**
+ * @brief Tests updating a medicine schedule that does not exist in the queue.
+ */
 TEST_F(MedicineQueueTest, UpdateMedicineSchedule_NotFound) {
     addMedicineSchedule(medicineQueue, "Buddy", "Morning Medicine");
 
@@ -844,7 +856,9 @@ TEST_F(MedicineQueueTest, UpdateMedicineSchedule_NotFound) {
     EXPECT_NE(output.find("Medicine schedule for pet 'Nonexistent' not found."), std::string::npos);
 }
 
-// Test: Medicine schedule silme
+/**
+ * @brief Tests deleting a medicine schedule from the queue.
+ */
 TEST_F(MedicineQueueTest, DeleteMedicineSchedule) {
     addMedicineSchedule(medicineQueue, "Buddy", "Morning Medicine");
 
@@ -852,7 +866,9 @@ TEST_F(MedicineQueueTest, DeleteMedicineSchedule) {
     EXPECT_TRUE(isQueueEmpty(medicineQueue));
 }
 
-// Test: Medicine schedule silme (Hatalı isim)
+/**
+ * @brief Tests deleting a medicine schedule that does not exist.
+ */
 TEST_F(MedicineQueueTest, DeleteMedicineSchedule_NotFound) {
     addMedicineSchedule(medicineQueue, "Buddy", "Morning Medicine");
 
@@ -863,7 +879,9 @@ TEST_F(MedicineQueueTest, DeleteMedicineSchedule_NotFound) {
     EXPECT_NE(output.find("Medicine schedule for pet 'Nonexistent' not found."), std::string::npos);
 }
 
-// Test: Medicine schedule görüntüleme
+/**
+ * @brief Tests listing all medicine schedules in the queue.
+ */
 TEST_F(MedicineQueueTest, ViewMedicineSchedules) {
     addMedicineSchedule(medicineQueue, "Buddy", "Morning Medicine");
     addMedicineSchedule(medicineQueue, "Kitty", "Evening Medicine");
@@ -876,7 +894,9 @@ TEST_F(MedicineQueueTest, ViewMedicineSchedules) {
     EXPECT_NE(output.find("Pet: Kitty, Schedule: Evening Medicine"), std::string::npos);
 }
 
-// Test: Medicine schedule görüntüleme (Boş kuyruk)
+/**
+ * @brief Tests listing schedules when the queue is empty.
+ */
 TEST_F(MedicineQueueTest, ViewMedicineSchedules_EmptyQueue) {
     testing::internal::CaptureStdout();
     viewMedicineSchedules(medicineQueue);
@@ -885,7 +905,9 @@ TEST_F(MedicineQueueTest, ViewMedicineSchedules_EmptyQueue) {
     EXPECT_NE(output.find("No medicine schedules available."), std::string::npos);
 }
 
-// Test: SCC algoritması çalıştırma
+/**
+ * @brief Tests the Strongly Connected Components (SCC) analysis for medicine schedule dependencies.
+ */
 TEST(MedicineScheduleTest, FindSCC) {
     testing::internal::CaptureStdout();
     findSCC();
@@ -895,20 +917,29 @@ TEST(MedicineScheduleTest, FindSCC) {
     EXPECT_NE(output.find("Strongly Connected Components analysis completed."), std::string::npos);
 }
 
-
-
-
-// Test fixture for Queue operations
+/**
+ * @class FeedingQueueTest
+ * @brief Test fixture for feeding schedule queue operations.
+ */
 class FeedingQueueTest : public ::testing::Test {
 protected:
+
+    /**
+     * @brief Queue pointer for handling feeding schedules.
+     */
     Queue* feedingQueue;
 
+    /**
+     * @brief Initializes the feeding queue before each test.
+     */
     void SetUp() override {
-        feedingQueue = createQueue(); // Test başlamadan önce boş bir kuyruk oluştur
+        feedingQueue = createQueue();
     }
 
+    /**
+     * @brief Empties and frees the feeding queue after each test.
+     */
     void TearDown() override {
-        // Kuyruk elemanlarını temizle
         while (!isQueueEmpty(feedingQueue)) {
             FeedingSchedule* temp = dequeue(feedingQueue);
             free(temp);
@@ -917,13 +948,17 @@ protected:
     }
 };
 
-// Test: Queue oluşturma
+/**
+ * @brief Tests queue creation and initial conditions.
+ */
 TEST_F(FeedingQueueTest, CreateQueue) {
     ASSERT_NE(feedingQueue, nullptr);
     EXPECT_TRUE(isQueueEmpty(feedingQueue));
 }
 
-// Test: Feeding Schedule ekleme
+/**
+ * @brief Tests enqueuing a feeding schedule into the queue.
+ */
 TEST_F(FeedingQueueTest, Enqueue) {
     enqueue(feedingQueue, "Buddy", "Morning Feed");
     ASSERT_FALSE(isQueueEmpty(feedingQueue));
@@ -932,7 +967,9 @@ TEST_F(FeedingQueueTest, Enqueue) {
     EXPECT_STREQ(feedingQueue->front->scheduleDetails, "Morning Feed");
 }
 
-// Test: Feeding Schedule çıkarma
+/**
+ * @brief Tests dequeuing a feeding schedule from the queue.
+ */
 TEST_F(FeedingQueueTest, Dequeue) {
     enqueue(feedingQueue, "Buddy", "Morning Feed");
     enqueue(feedingQueue, "Kitty", "Evening Feed");
@@ -943,12 +980,14 @@ TEST_F(FeedingQueueTest, Dequeue) {
     EXPECT_STREQ(removed->petName, "Buddy");
     EXPECT_STREQ(removed->scheduleDetails, "Morning Feed");
 
-    free(removed); // Çıkarılan elemanı serbest bırak
+    free(removed); 
     EXPECT_FALSE(isQueueEmpty(feedingQueue));
     EXPECT_STREQ(feedingQueue->front->petName, "Kitty");
 }
 
-// Test: Queue boş mu kontrol etme
+/**
+ * @brief Tests the queue's empty-state detection.
+ */
 TEST_F(FeedingQueueTest, IsQueueEmpty) {
     EXPECT_TRUE(isQueueEmpty(feedingQueue));
 
@@ -956,7 +995,9 @@ TEST_F(FeedingQueueTest, IsQueueEmpty) {
     EXPECT_FALSE(isQueueEmpty(feedingQueue));
 }
 
-// Test: Feeding Schedule güncelleme
+/**
+ * @brief Tests updating an existing feeding schedule.
+ */
 TEST_F(FeedingQueueTest, UpdateFeedingSchedule) {
     enqueue(feedingQueue, "Buddy", "Morning Feed");
 
@@ -964,7 +1005,9 @@ TEST_F(FeedingQueueTest, UpdateFeedingSchedule) {
     EXPECT_STREQ(feedingQueue->front->scheduleDetails, "Evening Feed");
 }
 
-// Test: Feeding Schedule güncelleme (Hatalı isim)
+/**
+ * @brief Tests updating a feeding schedule that does not exist.
+ */
 TEST_F(FeedingQueueTest, UpdateFeedingSchedule_NotFound) {
     enqueue(feedingQueue, "Buddy", "Morning Feed");
 
@@ -975,7 +1018,9 @@ TEST_F(FeedingQueueTest, UpdateFeedingSchedule_NotFound) {
     EXPECT_NE(output.find("Feeding schedule for pet 'Nonexistent' not found."), std::string::npos);
 }
 
-// Test: Feeding Schedule silme
+/**
+ * @brief Tests deleting a feeding schedule from the queue.
+ */
 TEST_F(FeedingQueueTest, DeleteFeedingSchedule) {
     enqueue(feedingQueue, "Buddy", "Morning Feed");
 
@@ -983,7 +1028,9 @@ TEST_F(FeedingQueueTest, DeleteFeedingSchedule) {
     EXPECT_TRUE(isQueueEmpty(feedingQueue));
 }
 
-// Test: Feeding Schedule silme (Hatalı isim)
+/**
+ * @brief Tests deleting a feeding schedule that does not exist in the queue.
+ */
 TEST_F(FeedingQueueTest, DeleteFeedingSchedule_NotFound) {
     enqueue(feedingQueue, "Buddy", "Morning Feed");
 
@@ -994,7 +1041,9 @@ TEST_F(FeedingQueueTest, DeleteFeedingSchedule_NotFound) {
     EXPECT_NE(output.find("Feeding schedule for pet 'Nonexistent' not found."), std::string::npos);
 }
 
-// Test: Feeding Schedule görüntüleme
+/**
+ * @brief Tests listing all feeding schedules in the queue.
+ */
 TEST_F(FeedingQueueTest, ViewFeedingSchedules) {
     enqueue(feedingQueue, "Buddy", "Morning Feed");
     enqueue(feedingQueue, "Kitty", "Evening Feed");
@@ -1007,7 +1056,9 @@ TEST_F(FeedingQueueTest, ViewFeedingSchedules) {
     EXPECT_NE(output.find("Pet: Kitty, Schedule: Evening Feed"), std::string::npos);
 }
 
-// Test: Feeding Schedule görüntüleme (Boş kuyruk)
+/**
+ * @brief Tests listing feeding schedules when the queue is empty.
+ */
 TEST_F(FeedingQueueTest, ViewFeedingSchedules_EmptyQueue) {
     testing::internal::CaptureStdout();
     viewFeedingSchedules(feedingQueue);
@@ -1016,42 +1067,76 @@ TEST_F(FeedingQueueTest, ViewFeedingSchedules_EmptyQueue) {
     EXPECT_NE(output.find("No feeding schedules available."), std::string::npos);
 }
 
-
+/**
+ * @class HuffmanTest
+ * @brief Test fixture for Huffman coding functionality.
+ */
 class HuffmanTest : public ::testing::Test {
 protected:
+    /**
+     * @brief Array to hold distinct characters for Huffman coding tests.
+     */
     char data[256];
+
+    /**
+     * @brief Frequency of each character for Huffman coding.
+     */
     int freq[256];
+
+    /**
+     * @brief Root node of the Huffman tree.
+     */
     MinHeapNode* root;
+
+    /**
+     * @brief Table to store Huffman codes for each character.
+     */
     char codes[256][MAX_TREE_HT];
+
+    /**
+     * @brief String buffer for the input to be compressed.
+     */
     char input[1024];
+
+    /**
+     * @brief String buffer for the compressed output.
+     */
     char compressed[1024];
+
+    /**
+     * @brief String buffer for the decompressed result.
+     */
     char decompressed[1024];
 
+    /**
+     * @brief Sets up the Huffman tree and codes before each test.
+     */
     void SetUp() override {
-        // Örnek giriş verileri
         strcpy(data, "abc");
         int example_freq[] = { 5, 3, 1 };
         memcpy(freq, example_freq, sizeof(example_freq));
 
-        // Huffman ağacı ve kodları oluştur
         memset(codes, 0, sizeof(codes));
         HuffmanCodes(data, freq, 3, codes);
 
         root = buildHuffmanTree(data, freq, 3);
 
-        // Giriş metni ayarla
         strcpy(input, "abc");
         compressed[0] = '\0';
         decompressed[0] = '\0';
     }
 
+    /**
+     * @brief Frees the Huffman tree after each test.
+     */
     void TearDown() override {
-        // Bellek temizliği (Gerekirse Huffman ağacı düğümleri için)
         free(root);
     }
 };
 
-// Test 1: MinHeapNode oluşturulması
+/**
+ * @brief Tests the creation of a new Huffman tree node.
+ */
 TEST_F(HuffmanTest, NewNodeTest) {
     MinHeapNode* node = newNode('a', 5);
     ASSERT_NE(node, nullptr);
@@ -1062,7 +1147,9 @@ TEST_F(HuffmanTest, NewNodeTest) {
     free(node);
 }
 
-// Test 2: MinHeap oluşturulması
+/**
+ * @brief Tests the creation of a new min-heap for Huffman coding.
+ */
 TEST_F(HuffmanTest, CreateMinHeapTest) {
     MinHeap* heap = createMinHeap(10);
     ASSERT_NE(heap, nullptr);
@@ -1073,7 +1160,9 @@ TEST_F(HuffmanTest, CreateMinHeapTest) {
     free(heap);
 }
 
-// Test 3: MinHeap'e ekleme ve çıkarma
+/**
+ * @brief Tests inserting into the min-heap and extracting the minimum element.
+ */
 TEST_F(HuffmanTest, InsertAndExtractMinTest) {
     MinHeap* heap = createMinHeap(10);
     insertMinHeap(heap, newNode('a', 5));
@@ -1087,49 +1176,78 @@ TEST_F(HuffmanTest, InsertAndExtractMinTest) {
     free(heap);
 }
 
-// Test 4: Huffman ağacı oluşturma
+/**
+ * @brief Tests constructing the Huffman tree from data and frequencies.
+ */
 TEST_F(HuffmanTest, BuildHuffmanTreeTest) {
     ASSERT_NE(root, nullptr);
-    EXPECT_EQ(root->freq, 9);  // Toplam frekans
+    EXPECT_EQ(root->freq, 9);  
 }
 
+/**
+ * @brief Verifies that Huffman codes are generated for each character.
+ */
 TEST_F(HuffmanTest, HuffmanCodesTest) {
     EXPECT_STRNE(codes[(int)'a'], "");
     EXPECT_STRNE(codes[(int)'b'], "");
     EXPECT_STRNE(codes[(int)'c'], "");
 }
 
+/**
+ * @brief Tests compressing a string using generated Huffman codes.
+ */
 TEST_F(HuffmanTest, CompressTest) {
     compress(input, codes, compressed);
     ASSERT_STRNE(compressed, "");
     std::cout << "Sıkıştırılmış metin: " << compressed << std::endl;
 }
 
+/**
+ * @brief Tests decompressing a string using the Huffman tree.
+ */
 TEST_F(HuffmanTest, DecompressTest) {
     compress(input, codes, compressed);
     decompress(root, compressed, decompressed);
     EXPECT_STREQ(input, decompressed);
 }
 
+/**
+ * @brief Tests a full cycle of compression and decompression for correctness.
+ */
 TEST_F(HuffmanTest, CompressDecompressIntegratedTest) {
     compress(input, codes, compressed);
     decompress(root, compressed, decompressed);
     EXPECT_STREQ(input, decompressed);
 }
 
-
-
-
+/**
+ * @brief Filename for stray animals pending adoption.
+ */
 static const char* TEST_ADOPTABLE_FILE = "test_adoptable.dat";
+
+/**
+ * @brief Filename for already adopted animals.
+ */
 static const char* TEST_ADOPTED_FILE = "test_adopted.dat";
 
+/**
+ * @brief Removes a file if it already exists, used to clean up test files.
+ * @param filename Name of the file to be removed.
+ */
 void removeFileIfExists(const char* filename) {
     std::remove(filename);
 }
 
-
+/**
+ * @class StrayAnimalTest
+ * @brief Test fixture for stray and adopted animal operations.
+ */
 class StrayAnimalTest : public ::testing::Test {
 protected:
+
+    /**
+     * @brief Sets up stray and adopted lists, removing any old test files.
+     */
     void SetUp() override {
         strayList = nullptr;
         adoptedList = nullptr;
@@ -1138,6 +1256,9 @@ protected:
         removeFileIfExists(TEST_ADOPTED_FILE);
     }
 
+    /**
+     * @brief Frees stray and adopted lists, and removes test files after each test.
+     */
     void TearDown() override {
         while (strayList) {
             StrayAnimal* temp = strayList;
@@ -1154,11 +1275,20 @@ protected:
         removeFileIfExists(TEST_ADOPTED_FILE);
     }
 
+    /**
+     * @brief Pointer to the list of stray animals.
+     */
     StrayAnimal* strayList;
+
+    /**
+     * @brief Pointer to the list of adopted animals.
+     */
     AdoptedAnimal* adoptedList;
 };
 
-
+/**
+ * @brief Tests the KMP search with an empty pattern.
+ */
 TEST_F(StrayAnimalTest, KMP_EmptyPatternShouldMatchAnyText) {
     const char* text = "example";
     const char* pattern = "";
@@ -1167,6 +1297,9 @@ TEST_F(StrayAnimalTest, KMP_EmptyPatternShouldMatchAnyText) {
     EXPECT_TRUE(result);
 }
 
+/**
+ * @brief Tests the KMP search for a pattern that is present in the text.
+ */
 TEST_F(StrayAnimalTest, KMP_Found) {
     const char* text = "dogcatparrot";
     const char* pattern = "cat";
@@ -1174,6 +1307,9 @@ TEST_F(StrayAnimalTest, KMP_Found) {
     EXPECT_TRUE(result);
 }
 
+/**
+ * @brief Tests the KMP search for a pattern that is absent in the text.
+ */
 TEST_F(StrayAnimalTest, KMP_NotFound) {
     const char* text = "dogcatparrot";
     const char* pattern = "bird";
@@ -1181,7 +1317,9 @@ TEST_F(StrayAnimalTest, KMP_NotFound) {
     EXPECT_FALSE(result);
 }
 
-
+/**
+ * @brief Tests adding stray animals to the list and then listing them.
+ */
 TEST_F(StrayAnimalTest, AddStrayAnimal_And_ListStrayAnimals) {
     addStrayAnimalToList(&strayList, "Cat", "Female", "01/01/2023", 2);
     addStrayAnimalToList(&strayList, "Dog", "Male", "02/01/2023", 3);
@@ -1195,6 +1333,9 @@ TEST_F(StrayAnimalTest, AddStrayAnimal_And_ListStrayAnimals) {
     listStrayAnimals(strayList);
 }
 
+/**
+ * @brief Tests searching for stray animals using KMP.
+ */
 TEST_F(StrayAnimalTest, SearchStrayAnimalsKMP_ShouldFindCorrectAnimal) {
     addStrayAnimalToList(&strayList, "Cat", "Female", "01/01/2023", 2);
     addStrayAnimalToList(&strayList, "Dog", "Male", "02/01/2023", 3);
@@ -1203,7 +1344,9 @@ TEST_F(StrayAnimalTest, SearchStrayAnimalsKMP_ShouldFindCorrectAnimal) {
     searchStrayAnimalsKMP(strayList, "Parrot");
 }
 
-
+/**
+ * @brief Tests successful update of a stray animal's information.
+ */
 TEST_F(StrayAnimalTest, UpdateStrayAnimal_Success) {
     addStrayAnimalToList(&strayList, "Dog", "Male", "01/01/2023", 3);
     int originalID = strayList->id;
@@ -1223,7 +1366,9 @@ TEST_F(StrayAnimalTest, UpdateStrayAnimal_Success) {
     EXPECT_EQ(strayList->age, 5);
 }
 
-
+/**
+ * @brief Tests trying to update a stray animal that does not exist.
+ */
 TEST_F(StrayAnimalTest, UpdateStrayAnimal_IdNotFound) {
     addStrayAnimalToList(&strayList, "Cat", "Female", "01/01/2023", 2);
     addStrayAnimalToList(&strayList, "Dog", "Male", "02/02/2023", 4);
@@ -1253,6 +1398,9 @@ TEST_F(StrayAnimalTest, UpdateStrayAnimal_IdNotFound) {
     EXPECT_EQ(second->age, 4);
 }
 
+/**
+ * @brief Tests deleting a stray animal from the list.
+ */
 TEST_F(StrayAnimalTest, DeleteStrayAnimal_ShouldRemoveFromList) {
     addStrayAnimalToList(&strayList, "Cat", "Female", "01/01/2023", 2);
     addStrayAnimalToList(&strayList, "Dog", "Male", "02/01/2023", 3);
@@ -1275,7 +1423,9 @@ TEST_F(StrayAnimalTest, DeleteStrayAnimal_ShouldRemoveFromList) {
 }
 
 
-
+/**
+ * @brief Tests saving stray animals to a file and loading them back.
+ */
 TEST_F(StrayAnimalTest, SaveAndLoadStrayAnimals) {
     addStrayAnimalToList(&strayList, "Cat", "Female", "01/01/2023", 2);
     addStrayAnimalToList(&strayList, "Dog", "Male", "02/02/2023", 3);
@@ -1306,9 +1456,9 @@ TEST_F(StrayAnimalTest, SaveAndLoadStrayAnimals) {
     EXPECT_TRUE(foundDog);
 }
 
-
-
-
+/**
+ * @brief Tests saving adopted animals to a file and loading them back.
+ */
 TEST_F(StrayAnimalTest, SaveAndLoadAdoptedAnimals) {
 
     AdoptedAnimal an;
@@ -1340,7 +1490,9 @@ TEST_F(StrayAnimalTest, SaveAndLoadAdoptedAnimals) {
     EXPECT_STREQ(adoptedList->adoptionDate, "05/02/2023");
 }
 
-
+/**
+ * @brief Tests listing all adopted animals when there are none and when there is at least one.
+ */
 TEST_F(StrayAnimalTest, ListAllAdoptedAnimals) {
     listAllAdoptedAnimals(adoptedList);
     SUCCEED();
@@ -1364,7 +1516,9 @@ TEST_F(StrayAnimalTest, ListAllAdoptedAnimals) {
     SUCCEED();
 }
 
-
+/**
+ * @brief Tests loading of B+ tree birthday data from a file and verifying pet details.
+ */
 TEST(LoadBirthdaysTest, BasicLoad) {
     const char* testFilename = "test_birthdays.dat";
 
@@ -1388,8 +1542,6 @@ TEST(LoadBirthdaysTest, BasicLoad) {
 
     loadBirthdaysFromFile(loadedTree, testFilename, &loadedPetList);
 
-
-
     Pet* foundTom = findPetByName(loadedPetList, hashFunction("Tom"));
     ASSERT_NE(foundTom, nullptr) << "Tom pet'i yüklenemedi!";
     EXPECT_STREQ(foundTom->name, "Tom");
@@ -1404,7 +1556,6 @@ TEST(LoadBirthdaysTest, BasicLoad) {
     EXPECT_EQ(foundRex->age, 5);
     EXPECT_STREQ(foundRex->owner, "Bob");
 
-    // "Nemo" kontrolü
     Pet* foundNemo = findPetByName(loadedPetList, hashFunction("Nemo"));
     ASSERT_NE(foundNemo, nullptr) << "Nemo pet'i yüklenemedi!";
     EXPECT_STREQ(foundNemo->name, "Nemo");
@@ -1414,11 +1565,17 @@ TEST(LoadBirthdaysTest, BasicLoad) {
 
     std::remove(testFilename);
 
-
 }
 
-
-
+/**
+ * @brief Creates a stray animal node for testing.
+ * @param id Unique ID of the stray animal.
+ * @param type The species type of the stray animal.
+ * @param gender The gender of the stray animal.
+ * @param arrivalDate The date the animal arrived.
+ * @param age The age of the animal.
+ * @return Pointer to the created StrayAnimal node.
+ */
 static StrayAnimal* createStrayAnimal(int id, const char* type, const char* gender, const char* arrivalDate, int age) {
     StrayAnimal* animal = (StrayAnimal*)malloc(sizeof(StrayAnimal));
     animal->id = id;
@@ -1430,7 +1587,12 @@ static StrayAnimal* createStrayAnimal(int id, const char* type, const char* gend
     return animal;
 }
 
-// Adopted listede bir hayvan ID'sini aramak için küçük bir yardımcı fonksiyon
+/**
+ * @brief Finds an adopted animal in the list by its ID (for testing).
+ * @param list Pointer to the head of AdoptedAnimal list.
+ * @param id The ID to search for.
+ * @return True if found, false otherwise.
+ */
 static bool findAdoptedAnimal(AdoptedAnimal* list, int id) {
     while (list) {
         if (list->id == id) {
@@ -1441,37 +1603,32 @@ static bool findAdoptedAnimal(AdoptedAnimal* list, int id) {
     return false;
 }
 
-// Basit test: Listedeki tek hayvanı başarıyla sahiplenme senaryosu
+/**
+ * @brief Tests the adoption flow of a stray animal that exists in the list.
+ */
 TEST(AdoptStrayAnimalTest, BasicAdoptionFlow) {
-    // 1) StrayAnimal listesinde tek hayvan olsun (ID=1)
     StrayAnimal* strayList = createStrayAnimal(1, "Dog", "Male", "12/12/2023", 2);
 
-    // 2) Fonksiyona vereceğimiz parametreler
-    //    chosenID=1, newName="Fluffy", adoptionDate="01/01/2024"
     int chosenID = 1;
     const char* newName = "Fluffy";
     const char* adoptionDate = "01/01/2024";
     const char* activeUser = "TestUser";
 
-    // 3) Fonksiyonu çağır
     adoptStrayAnimal(&strayList, activeUser, chosenID, newName, adoptionDate);
 
-    // 4) Artık strayList boş (nullptr) olmalı (çünkü ID=1 hayvan sahiplenildi)
     EXPECT_EQ(strayList, nullptr)
         << "Stray list should be empty after adopting the only animal with ID=1.";
 
-    // 5) adopted.dat dosyasını tekrar yükleyip, ID=1 hayvanın varlığını kontrol edelim
     AdoptedAnimal* adoptedList = nullptr;
     loadAdoptedAnimalsFromFile(&adoptedList, "adopted.dat");
 
     EXPECT_TRUE(findAdoptedAnimal(adoptedList, 1))
         << "Adopted animal with ID=1 not found in adoptedList!";
-
-    // (Opsiyonel) adoptedList'i test sonunda free edebilirsiniz.
-    // Normal projede bu veriyi tutmaya devam edebilirsiniz.
 }
 
-// İkinci test: Listede olmayan bir ID ile çağrı yapıldığında hayvan bulunamaması durumu
+/**
+ * @brief Tests the adoption flow attempt on a non-existent stray animal ID.
+ */
 TEST(AdoptStrayAnimalTest, NonExistentID) {
     StrayAnimal* strayList = createStrayAnimal(1, "Cat", "Female", "10/10/2023", 1);
 
@@ -1493,36 +1650,30 @@ TEST(AdoptStrayAnimalTest, NonExistentID) {
 
 }
 
-
+/**
+ * @brief Tests listing all pet birthdays stored in the B+ tree along with pet details.
+ */
 TEST_F(BPlusTreeTest, ListPetBirthdays_BasicFunctionality) {
-    // 1. Pet listesini oluştur ve hayvanlar ekle
+
     addPet(&petList, "Tom", "Cat", 3, "Alice");
     addPet(&petList, "Rex", "Dog", 5, "Bob");
     addPet(&petList, "Nemo", "Fish", 1, "Charlie");
 
-    // 2. B+ ağacına doğum günlerini ekle
     insertBirthday(tree, "Tom", 12, 5, 2024);    // 20240512
     insertBirthday(tree, "Rex", 1, 12, 2023);    // 20231201
     insertBirthday(tree, "Nemo", 31, 3, 2025);   // 20250331
 
-    // 3. Beklenen çıktıyı oluştur
     std::string expectedOutput = "\n--- List of Pet Birthdays ---\n";
     expectedOutput += "Pet Name: Tom | Type: Cat | Owner: Alice | Birthday: 12/05/2024\n";
     expectedOutput += "Pet Name: Rex | Type: Dog | Owner: Bob | Birthday: 01/12/2023\n";
     expectedOutput += "Pet Name: Nemo | Type: Fish | Owner: Charlie | Birthday: 31/03/2025\n";
     expectedOutput += "--------------------------------\n";
 
-    // 4. Stdout'u yakalamaya başla
     testing::internal::CaptureStdout();
 
-    // 5. Fonksiyonu çağır
     listPetBirthdays(tree, petList);
 
-    // 6. Yakalanan çıktıyı al
     std::string actualOutput = testing::internal::GetCapturedStdout();
 
-    // 7. Beklenen ve gerçek çıktıyı karşılaştır
     EXPECT_EQ(actualOutput, expectedOutput);
 }
-
-

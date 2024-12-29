@@ -1,23 +1,36 @@
-﻿#include <stdio.h>
+﻿/**
+* @file petcareapp.cpp
+*/
+#include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
 #ifdef _WIN32
-#include <conio.h>  // Windows için getch()
+#include <conio.h>  // Windows for getch()
 #else
-#include <termios.h> // Linux için getch()
-#include <unistd.h>  // Linux için
+#include <termios.h> 
+#include <unistd.h>  
 #endif
 
 #include "methods.h"
-#include "petcare.h" // Include UserAuth module
+#include "petcare.h"
 
 #ifdef _WIN32
+/**
+ * @brief Clears the console screen.
+ */
 #define CLEAR_SCREEN() system("cls")
 #else
+/**
+ * @brief Clears the console screen.
+ */
 #define CLEAR_SCREEN() printf("\033[H\033[J")
 #endif
 
 #ifndef _WIN32
+/**
+ * @brief Cross-platform replacement for getch() on non-Windows systems.
+ * @return The character read from stdin.
+ */
 int getch() {
     struct termios oldt, newt;
     int ch;
@@ -31,18 +44,31 @@ int getch() {
 }
 #endif
 
+/**
+ * @brief A pointer to the feeding schedule queue.
+ */
 Queue* feedingQueue = NULL;
 
+/**
+ * @brief Menu structure used for CLI navigation.
+ */
 typedef struct Menu {
-    char* title;
-    struct Menu* parent;
-    char** items;
-    int itemCount;
-    struct Menu** subMenus;
+    char* title;         /**< Title of the menu. */
+    struct Menu* parent; /**< Pointer to the parent menu. */
+    char** items;        /**< Array of menu item strings. */
+    int itemCount;       /**< Number of menu items. */
+    struct Menu** subMenus; /**< Array of submenu pointers. */
 } Menu;
 
+/**
+ * @brief Holds the currently logged-in user's name.
+ */
 char activeUser[50] = "";
 
+/**
+ * @brief Draws a horizontal line of '*' characters.
+ * @param width Number of characters in the line.
+ */
 void drawHorizontalLine(int width) {
     for (int i = 0; i < width; i++) {
         printf("*");
@@ -50,6 +76,12 @@ void drawHorizontalLine(int width) {
     printf("\n");
 }
 
+/**
+ * @brief Draws a frame with a title and menu items, highlighting the selected item.
+ * @param menu Pointer to the Menu structure.
+ * @param selectedIndex Index of the currently highlighted menu item.
+ * @param width Total width of the frame.
+ */
 void drawFrameWithContent(Menu* menu, int selectedIndex, int width) {
     drawHorizontalLine(width);
 
@@ -70,7 +102,7 @@ void drawFrameWithContent(Menu* menu, int selectedIndex, int width) {
         else {
             printf("   %s", menu->items[i]);
         }
-        int contentWidth = width - 4 - strlen(menu->items[i]) - (i == selectedIndex ? 3 : 0);
+        int contentWidth = width - 4 - (int)strlen(menu->items[i]) - (i == selectedIndex ? 3 : 0);
         for (int j = 0; j < contentWidth; j++) printf(" ");
         printf("*\n");
     }
@@ -78,7 +110,12 @@ void drawFrameWithContent(Menu* menu, int selectedIndex, int width) {
     drawHorizontalLine(width);
 }
 
-// Kimlik doğrulama menüsü
+/**
+ * @brief Handles user authentication (Login/Register/Guest/Exit).
+ * @param authMenu Pointer to the Menu struct for authentication options.
+ * @param userTable Pointer to the user HashTable.
+ * @param isAuthenticated Pointer to a flag that becomes 1 if authenticated, otherwise 0.
+ */
 void navigateUserAuthentication(Menu* authMenu, HashTable* userTable, int* isAuthenticated) {
     int selectedIndex = 0;
 
@@ -94,26 +131,26 @@ void navigateUserAuthentication(Menu* authMenu, HashTable* userTable, int* isAut
 #ifdef _WIN32
         if (key == 0 || key == 224) {
             key = getch();
-            if (key == 72) { // UP_ARROW
+            if (key == 72) { // Up arrow
                 selectedIndex = (selectedIndex - 1 + authMenu->itemCount) % authMenu->itemCount;
             }
-            else if (key == 80) { // DOWN_ARROW
+            else if (key == 80) { // Down arrow
                 selectedIndex = (selectedIndex + 1) % authMenu->itemCount;
             }
         }
-        else if (key == 13) { // ENTER
+        else if (key == 13) { // Enter
 #else
         if (key == '\033') {
             getch();
             key = getch();
-            if (key == 'A') { // UP_ARROW
+            if (key == 'A') { // Up arrow
                 selectedIndex = (selectedIndex - 1 + authMenu->itemCount) % authMenu->itemCount;
             }
-            else if (key == 'B') { // DOWN_ARROW
+            else if (key == 'B') { // Down arrow
                 selectedIndex = (selectedIndex + 1) % authMenu->itemCount;
             }
         }
-        else if (key == '\n') { // ENTER
+        else if (key == '\n') { // Enter
 #endif
             if (strcmp(authMenu->items[selectedIndex], "Login") == 0) {
                 char username[50], password[50];
@@ -125,7 +162,7 @@ void navigateUserAuthentication(Menu* authMenu, HashTable* userTable, int* isAut
                 if (authenticateUser(userTable, username, password)) {
                     printf("Login successful! Press any key to continue...");
                     *isAuthenticated = 1;
-                    strcpy(activeUser, username); // Aktif kullanıcıyı kaydet
+                    strcpy(activeUser, username);
                 }
                 else {
                     printf("Login failed! Invalid credentials. Press any key to return...");
@@ -146,7 +183,7 @@ void navigateUserAuthentication(Menu* authMenu, HashTable* userTable, int* isAut
             else if (strcmp(authMenu->items[selectedIndex], "Guest Mode") == 0) {
                 printf("Guest mode activated! Press any key to continue...");
                 *isAuthenticated = 1;
-                strcpy(activeUser, "Guest"); // Misafir kullanıcı
+                strcpy(activeUser, "Guest");
                 getch();
             }
             else if (strcmp(authMenu->items[selectedIndex], "Exit") == 0) {
@@ -160,7 +197,12 @@ void navigateUserAuthentication(Menu* authMenu, HashTable* userTable, int* isAut
         }
     }
 
-// Manage Pets menüsü
+/**
+ * @brief Navigates the "Manage Pets" menu: Add, Update, Delete, List, Search.
+ * @param petsMenu Pointer to the Menu struct for pet management.
+ * @param petList Pointer to the pointer of the head of the pet list.
+ * @param isAuthenticated Flag for user authentication status.
+ */
 void navigatePetsMenu(Menu * petsMenu, Pet * *petList, int isAuthenticated) {
     int selectedIndex = 0;
 
@@ -176,26 +218,26 @@ void navigatePetsMenu(Menu * petsMenu, Pet * *petList, int isAuthenticated) {
 #ifdef _WIN32
         if (key == 0 || key == 224) {
             key = getch();
-            if (key == 72) { // UP_ARROW
+            if (key == 72) { // Up arrow
                 selectedIndex = (selectedIndex - 1 + petsMenu->itemCount) % petsMenu->itemCount;
             }
-            else if (key == 80) { // DOWN_ARROW
+            else if (key == 80) { // Down arrow
                 selectedIndex = (selectedIndex + 1) % petsMenu->itemCount;
             }
         }
-        else if (key == 13) { // ENTER
+        else if (key == 13) { // Enter
 #else
         if (key == '\033') {
             getch();
             key = getch();
-            if (key == 'A') { // UP_ARROW
+            if (key == 'A') { // Up arrow
                 selectedIndex = (selectedIndex - 1 + petsMenu->itemCount) % petsMenu->itemCount;
             }
-            else if (key == 'B') { // DOWN_ARROW
+            else if (key == 'B') { // Down arrow
                 selectedIndex = (selectedIndex + 1) % petsMenu->itemCount;
             }
         }
-        else if (key == '\n') { // ENTER
+        else if (key == '\n') { // Enter
 #endif
             if (strcmp(petsMenu->items[selectedIndex], "Add Pet") == 0) {
                 char name[50], type[50];
@@ -259,7 +301,6 @@ void navigatePetsMenu(Menu * petsMenu, Pet * *petList, int isAuthenticated) {
                 else {
                     printf("Invalid choice. Returning to menu...\n");
                 }
-
                 printf("Press any key to return...");
                 getch();
             }
@@ -270,7 +311,11 @@ void navigatePetsMenu(Menu * petsMenu, Pet * *petList, int isAuthenticated) {
         }
     }
 
-
+/**
+ * @brief Navigates the "Feeding and Medication Schedules" menu.
+ * @param feedingMenu Pointer to the Menu struct for feeding and medication.
+ * @param petList Pointer to the head of the pet list (unused here, but passed for consistency).
+ */
 void navigateFeedingMenu(Menu * feedingMenu, Pet * petList) {
     int selectedIndex = 0;
 
@@ -286,26 +331,26 @@ void navigateFeedingMenu(Menu * feedingMenu, Pet * petList) {
 #ifdef _WIN32
         if (key == 0 || key == 224) {
             key = getch();
-            if (key == 72) { // UP_ARROW
+            if (key == 72) { // Up arrow
                 selectedIndex = (selectedIndex - 1 + feedingMenu->itemCount) % feedingMenu->itemCount;
             }
-            else if (key == 80) { // DOWN_ARROW
+            else if (key == 80) { // Down arrow
                 selectedIndex = (selectedIndex + 1) % feedingMenu->itemCount;
             }
         }
-        else if (key == 13) { // ENTER
+        else if (key == 13) { // Enter
 #else
         if (key == '\033') {
             getch();
             key = getch();
-            if (key == 'A') { // UP_ARROW
+            if (key == 'A') { // Up arrow
                 selectedIndex = (selectedIndex - 1 + feedingMenu->itemCount) % feedingMenu->itemCount;
             }
-            else if (key == 'B') { // DOWN_ARROW
+            else if (key == 'B') { // Down arrow
                 selectedIndex = (selectedIndex + 1) % feedingMenu->itemCount;
             }
         }
-        else if (key == '\n') { // ENTER
+        else if (key == '\n') { // Enter
 #endif
             if (strcmp(feedingMenu->items[selectedIndex], "Add Feeding Schedule") == 0) {
                 char petName[50], scheduleDetails[100];
@@ -314,7 +359,7 @@ void navigateFeedingMenu(Menu * feedingMenu, Pet * petList) {
                 scanf("%s", petName);
                 printf("Enter feeding schedule details: ");
                 scanf(" %[^\n]", scheduleDetails);
-                enqueue(feedingQueue, petName, scheduleDetails); // Schedule ekleniyor
+                enqueue(feedingQueue, petName, scheduleDetails);
                 printf("Feeding schedule added! Press any key to return...");
                 getch();
             }
@@ -344,7 +389,7 @@ void navigateFeedingMenu(Menu * feedingMenu, Pet * petList) {
                     printf("No feeding schedules available.\n");
                 }
                 else {
-                    viewFeedingSchedules(feedingQueue); // Sıralı listeyi göster
+                    viewFeedingSchedules(feedingQueue);
                 }
                 printf("Press any key to return...");
                 getch();
@@ -382,40 +427,39 @@ void navigateFeedingMenu(Menu * feedingMenu, Pet * petList) {
             }
             else if (strcmp(feedingMenu->items[selectedIndex], "View Medicine Schedule List") == 0) {
                 CLEAR_SCREEN();
-                viewMedicineSchedules(medicineQueue); // Medicine Schedule listesi
+                viewMedicineSchedules(medicineQueue);
                 printf("Press any key to return...");
                 getch();
             }
             else if (strcmp(feedingMenu->items[selectedIndex], "Analyze Medicine Dependencies") == 0) {
                 CLEAR_SCREEN();
-                findSCC(); // Medicine Dependencies analizi
+                findSCC();
                 printf("Press any key to return...");
                 getch();
             }
-
             else if (strcmp(feedingMenu->items[selectedIndex], "Back") == 0) {
-                return; // Return to the previous menu
+                return;
             }
         }
         }
     }
 
-
-// Global pointer for the B+ tree (for pet birthdays)
-/* --------------- Adaptation (Birthday / Stray / Adoption) Menüsü --------------- */
-
-// Global pointer for the B+ tree (for pet birthdays)
+/**
+ * @brief Global pointer to the BPlusTree that stores birthdays.
+ */
 BPlusTree* birthdayTree = NULL;
 
-// Bu menüde: Record Pet Birthday + Stray Animals + Adoption
+/**
+ * @brief Navigates the "Pet Birthday and Adoption Anniversary" menu.
+ * @param adaptationMenu Pointer to the Menu struct for this category.
+ * @param petList Pointer to the head of the pet list.
+ */
 void navigateAdaptationMenu(Menu * adaptationMenu, Pet * petList) {
     int selectedIndex = 0;
 
-    // Stray Animals listesi (adoptable.dat)
     static StrayAnimal* strayList = NULL;
     loadStrayAnimalsFromFile(&strayList, "adoptable.dat");
 
-    // Adopted Animals listesi
     static AdoptedAnimal* adoptedList = NULL;
     loadAdoptedAnimalsFromFile(&adoptedList, "adopted.dat");
 
@@ -431,14 +475,14 @@ void navigateAdaptationMenu(Menu * adaptationMenu, Pet * petList) {
 #ifdef _WIN32
         if (key == 0 || key == 224) {
             key = getch();
-            if (key == 72) {
+            if (key == 72) { // Up arrow
                 selectedIndex = (selectedIndex - 1 + adaptationMenu->itemCount) % adaptationMenu->itemCount;
             }
-            else if (key == 80) {
+            else if (key == 80) { // Down arrow
                 selectedIndex = (selectedIndex + 1) % adaptationMenu->itemCount;
             }
         }
-        else if (key == 13) { // ENTER
+        else if (key == 13) { // Enter
 #else
         if (key == '\033') {
             getch();
@@ -450,7 +494,7 @@ void navigateAdaptationMenu(Menu * adaptationMenu, Pet * petList) {
                 selectedIndex = (selectedIndex + 1) % adaptationMenu->itemCount;
             }
         }
-        else if (key == '\n') { // ENTER
+        else if (key == '\n') {
 #endif
             if (strcmp(adaptationMenu->items[selectedIndex], "Record Pet Birthday") == 0) {
                 char petName[50];
@@ -458,7 +502,6 @@ void navigateAdaptationMenu(Menu * adaptationMenu, Pet * petList) {
                 CLEAR_SCREEN();
                 printf("Enter pet's name: ");
                 scanf("%s", petName);
-                // Check ownership
                 if (!isPetOwnedByUser(petList, petName, activeUser)) {
                     printf("Error: Pet not found or does not belong to you.\n");
                     getch();
@@ -476,7 +519,6 @@ void navigateAdaptationMenu(Menu * adaptationMenu, Pet * petList) {
             }
             else if (strcmp(adaptationMenu->items[selectedIndex], "Add stray animals") == 0) {
                 CLEAR_SCREEN();
-                // type, gender, arrival date, age
                 char type[50], gender[10], arrivalDate[20];
                 int age;
                 printf("Enter stray animal's type: ");
@@ -495,12 +537,11 @@ void navigateAdaptationMenu(Menu * adaptationMenu, Pet * petList) {
             }
             else if (strcmp(adaptationMenu->items[selectedIndex], "Update stray animals") == 0) {
                 CLEAR_SCREEN();
-                listStrayAnimals(strayList); // Mevcut sokak hayvanlarını göster
+                listStrayAnimals(strayList);
                 printf("Enter the ID of the stray animal to update: ");
                 int id;
                 scanf("%d", &id);
 
-                // Güncellenecek değerleri menü tarafında al
                 char newType[50], newGender[10], newArrivalDate[20];
                 int newAge;
 
@@ -516,16 +557,11 @@ void navigateAdaptationMenu(Menu * adaptationMenu, Pet * petList) {
                 printf("Enter new age: ");
                 scanf("%d", &newAge);
 
-                // Şimdi güncelleme fonksiyonunu çağır
                 updateStrayAnimal(strayList, id, newType, newGender, newArrivalDate, newAge);
-
-                // Değişiklikleri dosyaya kaydet
                 saveStrayAnimalsToFile(strayList, "adoptable.dat");
-
                 printf("Press any key to continue...");
                 getch();
             }
-
             else if (strcmp(adaptationMenu->items[selectedIndex], "Delete stray animals") == 0) {
                 CLEAR_SCREEN();
                 listStrayAnimals(strayList);
@@ -548,50 +584,35 @@ void navigateAdaptationMenu(Menu * adaptationMenu, Pet * petList) {
             }
             else if (strcmp(adaptationMenu->items[selectedIndex], "Adopt stray animals") == 0) {
                 CLEAR_SCREEN();
-
-                // Sokak hayvanlarını listeleyelim (isterseniz adoptStrayAnimal içinde de listeleyebilirsiniz,
-                // ama bu kod düzeninde girişler menü tarafında yapıldığından burada göstermek mantıklı)
                 listStrayAnimals(strayList);
-
-                // Kullanıcıdan ID veya 'q' girmesini iste
                 printf("Select an ID to adopt (or 'q' to quit): ");
                 char choice[10];
                 scanf("%s", choice);
 
-                // Kullanıcı 'q' dediyse iptal
                 if (strcmp(choice, "q") == 0) {
                     printf("Adoption cancelled.\n");
                     printf("Press any key to continue...");
-                    getch(); // beklet
+                    getch();
                     return;
                 }
 
-                // Değilse chosenID al
                 int chosenID = atoi(choice);
 
-                // Yeni isim al
                 char newName[50];
                 printf("Enter a name you want to give this animal: ");
                 scanf("%s", newName);
 
-                // Adoption tarihi al
                 char adoptionDate[20];
                 printf("Enter adoption date (dd/mm/yyyy): ");
                 scanf("%s", adoptionDate);
 
-                // Ardından adoptStrayAnimal fonksiyonunu çağır:
                 adoptStrayAnimal(&strayList, activeUser, chosenID, newName, adoptionDate);
-
-                // Güvenlik için tekrar kaydedebiliriz (gerçi adoptStrayAnimal içinde de yapıldı)
                 saveStrayAnimalsToFile(strayList, "adoptable.dat");
-
                 printf("Press any key to continue...");
                 getch();
             }
-
             else if (strcmp(adaptationMenu->items[selectedIndex], "List all adopted animals") == 0) {
                 CLEAR_SCREEN();
-                // Adopted listesi read -> ekrana bas
                 free(adoptedList);
                 adoptedList = NULL;
                 loadAdoptedAnimalsFromFile(&adoptedList, "adopted.dat");
@@ -607,23 +628,14 @@ void navigateAdaptationMenu(Menu * adaptationMenu, Pet * petList) {
             }
             else if (strcmp(adaptationMenu->items[selectedIndex], "List Pet Birthdays") == 0) {
                 CLEAR_SCREEN();
-
-                // B+ ağacı yüklü değilse veya henüz yoksa yükleyelim (opsiyonel).
                 if (!birthdayTree) {
                     birthdayTree = createBPlusTree();
                 }
-                // Tekrar dosyadan yükleyerek en güncel datayı almak isteyebiliriz:
-                // (Eğer otomatik yükleniyorsa, bu adım opsiyonel olabilir.)
-
-
                 listPetBirthdays(birthdayTree, petList);
-
                 printf("Press any key to continue...");
                 getch();
             }
-
             else if (strcmp(adaptationMenu->items[selectedIndex], "Back") == 0) {
-                // Çıkarken stray ve adopted listesi kaydedilmiş olsun
                 saveStrayAnimalsToFile(strayList, "adoptable.dat");
                 saveAdoptedAnimalsToFile(adoptedList, "adopted.dat");
                 return;
@@ -632,9 +644,12 @@ void navigateAdaptationMenu(Menu * adaptationMenu, Pet * petList) {
         }
     }
 
-
-
-
+/**
+ * @brief Navigates the "Veterinary Appointment Tracking" menu.
+ * @param vetMenu Pointer to the Menu struct for vet appointments.
+ * @param activeUser The username of the currently logged-in user.
+ * @param petList Pointer to the head of the pet list.
+ */
 void navigateVetMenu(Menu * vetMenu, const char* activeUser, Pet * petList) {
     int selectedIndex = 0;
 
@@ -650,26 +665,26 @@ void navigateVetMenu(Menu * vetMenu, const char* activeUser, Pet * petList) {
 #ifdef _WIN32
         if (key == 0 || key == 224) {
             key = getch();
-            if (key == 72) { // UP_ARROW
+            if (key == 72) { // Up arrow
                 selectedIndex = (selectedIndex - 1 + vetMenu->itemCount) % vetMenu->itemCount;
             }
-            else if (key == 80) { // DOWN_ARROW
+            else if (key == 80) { // Down arrow
                 selectedIndex = (selectedIndex + 1) % vetMenu->itemCount;
             }
         }
-        else if (key == 13) { // ENTER
+        else if (key == 13) { // Enter
 #else
         if (key == '\033') {
             getch();
             key = getch();
-            if (key == 'A') { // UP_ARROW
+            if (key == 'A') { // Up arrow
                 selectedIndex = (selectedIndex - 1 + vetMenu->itemCount) % vetMenu->itemCount;
             }
-            else if (key == 'B') { // DOWN_ARROW
+            else if (key == 'B') { // Down arrow
                 selectedIndex = (selectedIndex + 1) % vetMenu->itemCount;
             }
         }
-        else if (key == '\n') { // ENTER
+        else if (key == '\n') { // Enter
 #endif
             if (strcmp(vetMenu->items[selectedIndex], "Add Appointment") == 0) {
                 char petName[50], description[100];
@@ -690,10 +705,9 @@ void navigateVetMenu(Menu * vetMenu, const char* activeUser, Pet * petList) {
                 char petName[50], newDescription[100];
                 int oldDay, oldMonth, newDay, newMonth;
 
-                loadAppointmentsFromFile(); // Randevuları dosyadan yükle
+                loadAppointmentsFromFile();
                 CLEAR_SCREEN();
 
-                // Kullanıcıdan gerekli bilgileri al
                 printf("Enter pet's name: ");
                 scanf("%s", petName);
 
@@ -706,9 +720,8 @@ void navigateVetMenu(Menu * vetMenu, const char* activeUser, Pet * petList) {
                 printf("Enter new description: ");
                 scanf(" %[^\n]", newDescription);
 
-                // Güncellenmiş `updateAppointment` fonksiyonunu çağır
                 if (updateAppointment(petName, oldDay, oldMonth, newDay, newMonth, newDescription, activeUser)) {
-                    saveAppointmentsToFile(); // Güncellemeden sonra dosyaya kaydet
+                    saveAppointmentsToFile();
                 }
 
                 printf("Press any key to return...");
@@ -739,14 +752,20 @@ void navigateVetMenu(Menu * vetMenu, const char* activeUser, Pet * petList) {
                 getch();
             }
             else if (strcmp(vetMenu->items[selectedIndex], "Back") == 0) {
-                return; // Return to main menu
+                return;
             }
         }
         }
     }
+
+/**
+ * @brief Navigates the "Exercise and Grooming Menu" for pets.
+ * @param exerciseMenu Pointer to the Menu struct for exercise/grooming.
+ * @param petList Pointer to the head of the pet list.
+ * @param activeUser The username of the currently logged-in user.
+ */
 void navigateExerciseMenu(Menu * exerciseMenu, Pet * petList, char* activeUser) {
     int selectedIndex = 0;
-
 
     while (1) {
         CLEAR_SCREEN();
@@ -760,26 +779,26 @@ void navigateExerciseMenu(Menu * exerciseMenu, Pet * petList, char* activeUser) 
 #ifdef _WIN32
         if (key == 0 || key == 224) {
             key = getch();
-            if (key == 72) { // UP_ARROW
+            if (key == 72) { // Up arrow
                 selectedIndex = (selectedIndex - 1 + exerciseMenu->itemCount) % exerciseMenu->itemCount;
             }
-            else if (key == 80) { // DOWN_ARROW
+            else if (key == 80) { // Down arrow
                 selectedIndex = (selectedIndex + 1) % exerciseMenu->itemCount;
             }
         }
-        else if (key == 13) { // ENTER
+        else if (key == 13) { // Enter
 #else
         if (key == '\u001b') {
             getch();
             key = getch();
-            if (key == 'A') { // UP_ARROW
+            if (key == 'A') {
                 selectedIndex = (selectedIndex - 1 + exerciseMenu->itemCount) % exerciseMenu->itemCount;
             }
-            else if (key == 'B') { // DOWN_ARROW
+            else if (key == 'B') {
                 selectedIndex = (selectedIndex + 1) % exerciseMenu->itemCount;
             }
         }
-        else if (key == '\n') { // ENTER
+        else if (key == '\n') { // Enter
 #endif
             if (strcmp(exerciseMenu->items[selectedIndex], "Add Exercise Routine") == 0) {
                 CLEAR_SCREEN();
@@ -827,32 +846,36 @@ void navigateExerciseMenu(Menu * exerciseMenu, Pet * petList, char* activeUser) 
                 printf("Enter grooming routine: ");
                 scanf(" %99[^\n]", exercise);
 
+                // Placeholder for grooming routine
                 // addGroomingRoutine(petName, exercise);
                 printf(" Press any key to return...");
                 getch();
             }
             else if (strcmp(exerciseMenu->items[selectedIndex], "List Groomings") == 0) {
                 CLEAR_SCREEN();
-                //  listAllGroomings();
+                // Placeholder for listing groomings
+                // listAllGroomings();
                 printf("Press any key to return...");
                 getch();
             }
             else if (strcmp(exerciseMenu->items[selectedIndex], "Back") == 0) {
-                return; // Return to the main menu
+                return;
             }
         }
         }
     }
 
+/**
+ * @brief Demonstrates Huffman compression/decompression for an "About" section.
+ * @param text The text to compress/decompress.
+ */
 void aboutMenu(char text[]) {
     CLEAR_SCREEN();
     int freq[256] = { 0 };
 
-    // Frekansları hesapla
     for (int i = 0; text[i] != '\0'; ++i)
         freq[(int)text[i]]++;
 
-    // Karakter ve frekans dizileri oluştur
     char data[256];
     int frequencies[256], size = 0;
     for (int i = 0; i < 256; ++i) {
@@ -863,16 +886,13 @@ void aboutMenu(char text[]) {
         }
     }
 
-    // Huffman kodları oluştur
     char codes[256][MAX_TREE_HT];
     HuffmanCodes(data, frequencies, size, codes);
 
-    // Metni sıkıştır
     char compressed[1024];
     compress(text, codes, compressed);
     printf("\nCompressed Text: %s\n", compressed);
 
-    // Metni çöz
     char decompressed[1024];
     MinHeapNode* root = buildHuffmanTree(data, frequencies, size);
     decompress(root, compressed, decompressed);
@@ -880,8 +900,12 @@ void aboutMenu(char text[]) {
     getch();
 }
 
-
-// Ana menü
+/**
+ * @brief Main menu navigation: calls submenus based on user selection.
+ * @param mainMenu Pointer to the main menu structure.
+ * @param userTable Pointer to the user HashTable.
+ * @param isAuthenticated Pointer to an integer flag for authentication.
+ */
 void navigateMainMenu(Menu * mainMenu, HashTable * userTable, int* isAuthenticated) {
     int selectedIndex = 0;
     static Pet* petList = NULL;
@@ -898,26 +922,26 @@ void navigateMainMenu(Menu * mainMenu, HashTable * userTable, int* isAuthenticat
 #ifdef _WIN32
         if (key == 0 || key == 224) {
             key = getch();
-            if (key == 72) { // UP_ARROW
+            if (key == 72) { // Up arrow
                 selectedIndex = (selectedIndex - 1 + mainMenu->itemCount) % mainMenu->itemCount;
             }
-            else if (key == 80) { // DOWN_ARROW
+            else if (key == 80) { // Down arrow
                 selectedIndex = (selectedIndex + 1) % mainMenu->itemCount;
             }
         }
-        else if (key == 13) { // ENTER
+        else if (key == 13) { // Enter
 #else
         if (key == '\033') {
             getch();
             key = getch();
-            if (key == 'A') { // UP_ARROW
+            if (key == 'A') { // Up arrow
                 selectedIndex = (selectedIndex - 1 + mainMenu->itemCount) % mainMenu->itemCount;
             }
-            else if (key == 'B') { // DOWN_ARROW
+            else if (key == 'B') { // Down arrow
                 selectedIndex = (selectedIndex + 1) % mainMenu->itemCount;
             }
         }
-        else if (key == '\n') { // ENTER
+        else if (key == '\n') { // Enter
 #endif
             if (strcmp(mainMenu->items[selectedIndex], "Manage Pets") == 0) {
                 navigatePetsMenu(mainMenu->subMenus[0], &petList, *isAuthenticated);
@@ -929,18 +953,14 @@ void navigateMainMenu(Menu * mainMenu, HashTable * userTable, int* isAuthenticat
                 navigateFeedingMenu(mainMenu->subMenus[2], petList);
             }
             else if (strcmp(mainMenu->items[selectedIndex], "Exercise and Grooming Menu") == 0) {
-
                 navigateExerciseMenu(mainMenu->subMenus[3], petList, activeUser);
-
             }
             else if (strcmp(mainMenu->items[selectedIndex], "Pet Birthday and Adoption Anniversary") == 0) {
                 navigateAdaptationMenu(mainMenu->subMenus[4], petList);
             }
-
             else if (strcmp(mainMenu->items[selectedIndex], "About") == 0) {
                 aboutMenu("This is our about section \n Mustafa , Ali Ufuktan , Omer Faruk and me (Onur) did this project ");
             }
-
             else if (strcmp(mainMenu->items[selectedIndex], "Exit") == 0) {
                 CLEAR_SCREEN();
                 printf("Exiting program...\n");
@@ -954,28 +974,40 @@ void navigateMainMenu(Menu * mainMenu, HashTable * userTable, int* isAuthenticat
             }
         }
         }
+    // Should never reach here in normal operation.
     }
 
-// Programın ana fonksiyonu
+/**
+ * @brief Main entry point of the Pet Care application.
+ * @return 0 on successful execution.
+ */
 int main() {
-
-    // Feeding queue başlatılır
     feedingQueue = createQueue();
-    // Medicine Queue başlatılır
     medicineQueue = createQueue();
-
 
     int isAuthenticated = 0;
     HashTable* userTable = createHashTable();
     loadUsersFromFile(userTable, "users.dat");
     loadAppointmentsFromFile();
-    // Menü elemanları
+
     char* authItems[] = { "Login", "Register", "Guest Mode", "Exit" };
     char* petItems[] = { "Add Pet", "Update Pet", "Delete", "List All Pets", "Search By Name or Type", "Back" };
-    char* feedingItems[] = { "Add Feeding Schedule","Update Feeding Schedule","Delete Feeding Schedule", "View Feeding Schedule List","------------------------------------------","Add Medicine Schedule","Update Medicine Schedule","Delete Medicine Schedule", "View Medicine Schedule List", "Analyze Medicine Dependencies", "Back" };
+    char* feedingItems[] = {
+        "Add Feeding Schedule","Update Feeding Schedule","Delete Feeding Schedule",
+        "View Feeding Schedule List","------------------------------------------",
+        "Add Medicine Schedule","Update Medicine Schedule","Delete Medicine Schedule",
+        "View Medicine Schedule List", "Analyze Medicine Dependencies", "Back"
+    };
     char* vetItems[] = { "Add Appointment","Update Appointment","Cancel Appointment", "View Appointments List", "Back" };
-    char* exerciseItems[] = { "Add Exercise Routine","List Exercises","Undo Last Exercises","------------------------------------------","Add Grooming Routine","List Groomings", "Back" };
-    char* birthdayItems[] = { "Record Pet Birthday","List Pet Birthdays","Add stray animals","Update stray animals","Delete stray animals","Search stray animals","Adopt stray animals","List all adoptable animals","List all adopted animals" ,"Back" };
+    char* exerciseItems[] = {
+        "Add Exercise Routine","List Exercises","Undo Last Exercises",
+        "------------------------------------------","Add Grooming Routine","List Groomings", "Back"
+    };
+    char* birthdayItems[] = {
+        "Record Pet Birthday","List Pet Birthdays","Add stray animals","Update stray animals",
+        "Delete stray animals","Search stray animals","Adopt stray animals","List all adoptable animals",
+        "List all adopted animals" ,"Back"
+    };
 
     char* mainMenuItems[] = {
         "Manage Pets",
@@ -987,7 +1019,6 @@ int main() {
         "Exit"
     };
 
-    // Menü yapıları
     Menu authMenu = { "User Authentication", NULL, authItems, 4, NULL };
     Menu petsMenu = { "Manage Pets", NULL, petItems, 6, NULL };
     Menu feedingMenu = { "Feeding and Medication Schedules", NULL, feedingItems, 11, NULL };
@@ -995,24 +1026,18 @@ int main() {
     Menu exerciseMenu = { "Exercise and Grooming Menu", NULL, exerciseItems, 7, NULL };
     Menu birthdayMenu = { "Pet Birthday and Adoption Anniversary", NULL, birthdayItems, 10, NULL };
 
-    // Ana menü ve alt menüler
     Menu* mainSubMenus[] = { &petsMenu, &vetMenu, &feedingMenu, &exerciseMenu, &birthdayMenu, NULL };
     Menu mainMenu = { "Main Menu", NULL, mainMenuItems, 7, mainSubMenus };
 
-    // Aktif kullanıcıyı takip etmek için global değişken
     extern char activeUser[50];
 
-    // 1. User Authentication Menüsüne Git
     navigateUserAuthentication(&authMenu, userTable, &isAuthenticated);
-
-    // 2. Kullanıcı doğrulandıysa ana menüye git
     if (isAuthenticated) {
         navigateMainMenu(&mainMenu, userTable, &isAuthenticated);
     }
 
-    feedingQueue = createQueue(); // Feeding Queue başlatılıyor
-    medicineQueue = createQueue(); // Medicine Queue başlatılıyor
+    feedingQueue = createQueue();
+    medicineQueue = createQueue();
 
     return 0;
 }
-
