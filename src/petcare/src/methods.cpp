@@ -1,9 +1,17 @@
-﻿#include <stdio.h>
+﻿/**
+ * @file methods.cpp
+ */
+#include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
 #include "methods.h"
 
-// Yeni bir düğüm oluştur
+/**
+ * @brief Creates a new Huffman tree node.
+ * @param data The character stored in the node.
+ * @param freq The frequency of the character.
+ * @return Pointer to the newly created node (MinHeapNode*).
+ */
 MinHeapNode* newNode(char data, unsigned freq) {
     MinHeapNode* temp = (MinHeapNode*)malloc(sizeof(MinHeapNode));
     temp->left = temp->right = NULL;
@@ -12,7 +20,11 @@ MinHeapNode* newNode(char data, unsigned freq) {
     return temp;
 }
 
-// Min yığın oluştur
+/**
+ * @brief Creates a Min-Heap for Huffman coding.
+ * @param capacity The maximum capacity of the Min-Heap.
+ * @return Pointer to the newly created MinHeap structure.
+ */
 MinHeap* createMinHeap(unsigned capacity) {
     MinHeap* minHeap = (MinHeap*)malloc(sizeof(MinHeap));
     minHeap->size = 0;
@@ -21,14 +33,22 @@ MinHeap* createMinHeap(unsigned capacity) {
     return minHeap;
 }
 
-// İki düğümün yerini değiştir
+/**
+ * @brief Swaps two MinHeapNode pointers.
+ * @param a Pointer to the first node.
+ * @param b Pointer to the second node.
+ */
 void swapMinHeapNode(MinHeapNode** a, MinHeapNode** b) {
     MinHeapNode* t = *a;
     *a = *b;
     *b = t;
 }
 
-// Min yığın düzenlemesi
+/**
+ * @brief Ensures the min-heap property for the node at the given index.
+ * @param minHeap Pointer to the MinHeap.
+ * @param idx Index at which to enforce the min-heap property.
+ */
 void minHeapify(MinHeap* minHeap, int idx) {
     int smallest = idx;
     int left = 2 * idx + 1;
@@ -46,7 +66,11 @@ void minHeapify(MinHeap* minHeap, int idx) {
     }
 }
 
-// En küçük düğümü çıkar
+/**
+ * @brief Extracts the node with the smallest frequency from the Min-Heap.
+ * @param minHeap Pointer to the MinHeap.
+ * @return Pointer to the extracted node.
+ */
 MinHeapNode* extractMin(MinHeap* minHeap) {
     MinHeapNode* temp = minHeap->array[0];
     minHeap->array[0] = minHeap->array[minHeap->size - 1];
@@ -55,7 +79,11 @@ MinHeapNode* extractMin(MinHeap* minHeap) {
     return temp;
 }
 
-// Düğümü yığına ekle
+/**
+ * @brief Inserts a node into the Min-Heap.
+ * @param minHeap Pointer to the MinHeap.
+ * @param minHeapNode Pointer to the node to insert.
+ */
 void insertMinHeap(MinHeap* minHeap, MinHeapNode* minHeapNode) {
     ++minHeap->size;
     int i = minHeap->size - 1;
@@ -67,40 +95,59 @@ void insertMinHeap(MinHeap* minHeap, MinHeapNode* minHeapNode) {
     minHeap->array[i] = minHeapNode;
 }
 
-// Min yığın oluştur
+/**
+ * @brief Builds a Min-Heap from the given arrays of data and frequencies.
+ * @param data Array of characters.
+ * @param freq Array of frequencies corresponding to each character.
+ * @param size Size of the data/freq arrays.
+ * @return Pointer to the created MinHeap.
+ */
 MinHeap* buildMinHeap(char data[], int freq[], int size) {
     MinHeap* minHeap = createMinHeap(size);
 
-    for (int i = 0; i < size; ++i)
+    for (int i = 0; i < size; ++i) {
         minHeap->array[i] = newNode(data[i], freq[i]);
+    }
 
     minHeap->size = size;
 
-    for (int i = (minHeap->size - 2) / 2; i >= 0; --i)
+    for (int i = (minHeap->size - 2) / 2; i >= 0; --i) {
         minHeapify(minHeap, i);
+    }
 
     return minHeap;
 }
 
-// Huffman ağacı oluştur
+/**
+ * @brief Builds the Huffman tree from arrays of data and frequencies.
+ * @param data Array of characters.
+ * @param freq Array of frequencies corresponding to each character.
+ * @param size The number of unique characters in data.
+ * @return Pointer to the root of the Huffman tree.
+ */
 MinHeapNode* buildHuffmanTree(char data[], int freq[], int size) {
-    MinHeapNode* left, * right, * top;
+    MinHeapNode *left, *right, *top;
     MinHeap* minHeap = buildMinHeap(data, freq, size);
 
     while (minHeap->size != 1) {
         left = extractMin(minHeap);
         right = extractMin(minHeap);
-
         top = newNode('$', left->freq + right->freq);
         top->left = left;
         top->right = right;
-
         insertMinHeap(minHeap, top);
     }
     return extractMin(minHeap);
 }
 
-// Kodları oluştur ve yazdır
+/**
+ * @brief Helper function to print Huffman codes for each character.
+ *        Also stores the generated codes in the 'codes' array.
+ * @param root Pointer to the root of the Huffman tree.
+ * @param arr An integer array used during code construction.
+ * @param top Current index in arr.
+ * @param codes A 2D array to store Huffman codes for each character (indexed by char).
+ */
 void printCodes(MinHeapNode* root, int arr[], int top, char codes[256][MAX_TREE_HT]) {
     if (root->left) {
         arr[top] = 0;
@@ -122,21 +169,38 @@ void printCodes(MinHeapNode* root, int arr[], int top, char codes[256][MAX_TREE_
     }
 }
 
-// Huffman kodlarını oluştur
+/**
+ * @brief Generates Huffman codes for the given data and frequencies.
+ * @param data Array of characters.
+ * @param freq Array of frequencies corresponding to each character.
+ * @param size Number of unique characters in data.
+ * @param codes A 2D array to store the generated Huffman codes.
+ */
 void HuffmanCodes(char data[], int freq[], int size, char codes[256][MAX_TREE_HT]) {
     MinHeapNode* root = buildHuffmanTree(data, freq, size);
     int arr[MAX_TREE_HT], top = 0;
     printCodes(root, arr, top, codes);
 }
 
-// Verilen metni sıkıştır
+/**
+ * @brief Compresses the input string using the provided Huffman codes.
+ * @param input The input string to be compressed.
+ * @param codes A 2D array of Huffman codes (indexed by character).
+ * @param output The output buffer for the compressed string.
+ */
 void compress(char* input, char codes[256][MAX_TREE_HT], char* output) {
     output[0] = '\0';
-    for (int i = 0; input[i] != '\0'; ++i)
+    for (int i = 0; input[i] != '\0'; ++i) {
         strcat(output, codes[(int)input[i]]);
+    }
 }
 
-// Huffman ağacını kullanarak çöz
+/**
+ * @brief Decompresses the given Huffman-coded string into the original text.
+ * @param root Pointer to the root of the Huffman tree.
+ * @param compressed The compressed binary string.
+ * @param output The output buffer for the decompressed string.
+ */
 void decompress(MinHeapNode* root, char* compressed, char* output) {
     MinHeapNode* current = root;
     int j = 0;
