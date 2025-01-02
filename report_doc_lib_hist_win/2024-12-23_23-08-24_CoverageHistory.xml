@@ -1,0 +1,14 @@
+<?xml version="1.0" encoding="utf-8" standalone="yes"?>
+<coverage version="1.0" date="2024-12-23_23-08-24" tag="">
+  <assembly name="Default">
+    <class name="C:\Users\yanmu\Desktop\v9\ce205-final-onurcakir-aliufuktantopcu-mustafayanmaz-omerfarukdogan-cpp\src\petcare\header\methods.h" coveredlines="0" coverablelines="24" totallines="32" coveredbranches="0" totalbranches="0" coveredcodeelements="0" totalcodeelements="0" />
+    <class name="C:\Users\yanmu\Desktop\v9\ce205-final-onurcakir-aliufuktantopcu-mustafayanmaz-omerfarukdogan-cpp\src\petcare\header\petcare.h" coveredlines="0" coverablelines="156" totallines="246" coveredbranches="0" totalbranches="0" coveredcodeelements="0" totalcodeelements="0" />
+    <class name="C:\Users\yanmu\Desktop\v9\ce205-final-onurcakir-aliufuktantopcu-mustafayanmaz-omerfarukdogan-cpp\src\petcare\src\methods.cpp" coveredlines="0" coverablelines="13" totallines="152" coveredbranches="0" totalbranches="0" coveredcodeelements="0" totalcodeelements="0" />
+    <class name="C:\Users\yanmu\Desktop\v9\ce205-final-onurcakir-aliufuktantopcu-mustafayanmaz-omerfarukdogan-cpp\src\petcare\src\petcare.cpp" coveredlines="0" coverablelines="70" totallines="1669" coveredbranches="0" totalbranches="0" coveredcodeelements="0" totalcodeelements="0" />
+    <class name="C:\Users\yanmu\Desktop\v9\ce205-final-onurcakir-aliufuktantopcu-mustafayanmaz-omerfarukdogan-cpp\src\petcareapp\header\petcareapp.h" coveredlines="1" coverablelines="1" totallines="11" coveredbranches="0" totalbranches="0" coveredcodeelements="0" totalcodeelements="0" />
+    <class name="C:\Users\yanmu\Desktop\v9\ce205-final-onurcakir-aliufuktantopcu-mustafayanmaz-omerfarukdogan-cpp\src\petcareapp\src\petcareapp.cpp" coveredlines="0" coverablelines="24" totallines="969" coveredbranches="0" totalbranches="0" coveredcodeelements="0" totalcodeelements="0" />
+    <class name="C:\Users\yanmu\Desktop\v9\ce205-final-onurcakir-aliufuktantopcu-mustafayanmaz-omerfarukdogan-cpp\src\utility\header\commonTypes.h" coveredlines="1" coverablelines="1" totallines="28" coveredbranches="0" totalbranches="0" coveredcodeelements="0" totalcodeelements="0" />
+    <class name="C:\Users\yanmu\Desktop\v9\ce205-final-onurcakir-aliufuktantopcu-mustafayanmaz-omerfarukdogan-cpp\src\utility\header\mathUtility.h" coveredlines="6" coverablelines="8" totallines="78" coveredbranches="0" totalbranches="0" coveredcodeelements="0" totalcodeelements="0" />
+    <class name="C:\Users\yanmu\Desktop\v9\ce205-final-onurcakir-aliufuktantopcu-mustafayanmaz-omerfarukdogan-cpp\src\utility\src\mathUtility.cpp" coveredlines="1" coverablelines="1" totallines="77" coveredbranches="0" totalbranches="0" coveredcodeelements="0" totalcodeelements="0" />
+  </assembly>
+</coverage>
