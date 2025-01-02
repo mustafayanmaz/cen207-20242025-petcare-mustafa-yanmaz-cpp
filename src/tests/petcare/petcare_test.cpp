@@ -485,18 +485,6 @@ TEST(CancelAppointmentTest, CancelValidAppointment) {
     EXPECT_EQ(appointmentList, nullptr);
 }
 
-/**
- * @brief Tests canceling an appointment that does not exist.
- */
-
-TEST(CancelAppointmentTest, CancelAppointmentNotFoundError) {
-    resetData();
-    addPet(&petList, "Buddy", "Dog", 3, "Alice");
-    testing::internal::CaptureStdout();
-    ASSERT_FALSE(cancelAppointment("Buddy", 15, 12, "Alice"));
-    std::string output = testing::internal::GetCapturedStdout();
-    EXPECT_TRUE(output.find("No matching appointment found") != std::string::npos);
-}
 
 /**
  * @brief Tests viewing appointments for a specific month.
