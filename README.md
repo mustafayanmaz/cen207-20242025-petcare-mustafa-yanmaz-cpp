@@ -10,16 +10,25 @@
 
 ### Releases
 
--- 
+[latest release](https://github.com/mustafayanmaz/ce205-final-onurcakir-aliufuktantopcu-mustafayanmaz-omerfarukdogan-cpp/releases/latest)
+
+---
 
 ### Test Coverage
 
---
+Test Coverage
+
+![test](assets/codecoveragelibwin/badge_linecoverage.svg/)
+
+Doxygen Coverage
+
+![doxygen](assets/doccoveragelibwin/badge_linecoverage.svg)
 
 ---
 
 ### Installation
 
+run 3rd 4th and 7th bat or sh files
 
 ---
 
@@ -75,7 +84,6 @@ you should run environment scripts
 ---
 
 ### Testing
-
 
 ---
 
