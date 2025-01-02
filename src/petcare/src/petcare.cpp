@@ -59,8 +59,7 @@ void addUser(HashTable* table, const char* username, const char* password) {
             printf("Error: User '%s' already exists.\n", username);
             return;
         }
-        current = current->next;
-    }
+        current = current->next;}
 
     User* newUser = (User*)malloc(sizeof(User));
     newUser->username = strdup(username);
@@ -105,8 +104,7 @@ int authenticateUser(HashTable* table, const char* username, const char* passwor
 void saveUsersToFile(HashTable* table, const char* filename) {
     FILE* file = fopen(filename, "wb");
     if (!file) {
-        perror("Error opening file");
-        return;
+        perror("Error opening file");return;
     }
 
     for (int i = 0; i < HASH_TABLE_SIZE; i++) {
@@ -257,14 +255,11 @@ void deletePet(Pet** petList, const char* name, const char* owner) {
     while (current) {
         if (strcmp(current->name, name) == 0 && strcmp(current->owner, owner) == 0) {
             if (current->prev) {
-                current->prev->next = current->next;
-            }
+                current->prev->next = current->next;}
             else {
                 *petList = current->next;
             }
-            if (current->next) {
-                current->next->prev = current->prev;
-            }
+            if (current->next) {current->next->prev = current->prev;}
             free(current->name);
             free(current->type);
             free(current->owner);
@@ -272,8 +267,7 @@ void deletePet(Pet** petList, const char* name, const char* owner) {
             printf("Pet deleted successfully.\n");
             return;
         }
-        current = current->next;
-    }
+        current = current->next;}
     printf("Pet not found or you do not have permission to delete this pet.\n");
 }
 
@@ -285,8 +279,7 @@ void deletePet(Pet** petList, const char* name, const char* owner) {
 void savePetsToFile(Pet* petList, const char* filename) {
     FILE* file = fopen(filename, "wb");
     if (!file) {
-        perror("Error opening file");
-        return;
+        perror("Error opening file");return;
     }
 
     while (petList) {
@@ -327,8 +320,7 @@ void savePetsToFile(Pet* petList, const char* filename) {
 void loadPetsFromFile(Pet** petList, const char* filename) {
     FILE* file = fopen(filename, "rb");
     if (!file) {
-        perror("Error opening file");
-        return;
+        perror("Error opening file");return;
     }
 
     while (1) {
@@ -441,8 +433,7 @@ void listAllPets(Pet* petList) {
     }
 
     if (count == 0) {
-        printf("No pets to display.\n");
-        return;
+        printf("No pets to display.\n"); return;
     }
 
     PetInfo* arr = (PetInfo*)malloc(count * sizeof(PetInfo));
@@ -629,8 +620,7 @@ bool updateAppointment(const char* petName, int oldDay, int oldMonth, int newDay
         next = XOR(prev, current->xorPtr);
 
         if (current == NULL) {
-            printf("Error: Null pointer encountered during traversal.\n");
-            return false;
+            printf("Error: Null pointer encountered during traversal.\n");return false;
         }
 
         if (strcmp(current->petName, petName) == 0 &&
@@ -657,13 +647,11 @@ bool updateAppointment(const char* petName, int oldDay, int oldMonth, int newDay
         nextTemp = XOR(prevTemp, temp->xorPtr);
 
         if (temp == NULL) {
-            printf("Error: Null pointer encountered during date conflict check.\n");
-            return false;
+            printf("Error: Null pointer encountered during date conflict check.\n");  return false;
         }
 
         if (temp->month == newMonth && temp->day == newDay && strcmp(temp->petName, petName) != 0) {
-            printf("Error: The date %02d/%02d is already occupied. Update failed.\n", newDay, newMonth);
-            return false;
+            printf("Error: The date %02d/%02d is already occupied. Update failed.\n", newDay, newMonth);return false;
         }
 
         prevTemp = temp;
@@ -708,12 +696,10 @@ bool cancelAppointment(const char* petName, int day, int month, const char* owne
         }
         next = XOR(prev, current->xorPtr);
         prev = current;
-        current = next;
-    }
+        current = next;}
 
     if (current == NULL) {
-        printf("Error: You do not own a pet named '%s'.\n", petName);
-        return false; 
+        printf("Error: You do not own a pet named '%s'.\n", petName); return false; 
     }
     prev = NULL;
     current = appointmentList;
@@ -803,8 +789,7 @@ void xorEncryptDecrypt(char* data, size_t len, const char* key) {
 void saveAppointmentsToFile() {
     FILE* file = fopen("appointment.data", "wb");
     if (!file) {
-        perror("Error opening file");
-        return;
+        perror("Error opening file");return;
     }
 
     Appointment* current = appointmentList;
@@ -819,11 +804,9 @@ void saveAppointmentsToFile() {
         fwrite(current, sizeof(Appointment), 1, file);
         xorEncryptDecrypt((char*)current, sizeof(Appointment), key);
         prev = current;
-        current = next;
-    }
+        current = next;}
 
-    fclose(file);
-}
+    fclose(file);}
 
 /**
  * @brief Loads all appointments from a file.
@@ -852,16 +835,13 @@ void loadAppointmentsFromFile() {
 
         newAppointment->xorPtr = XOR(prev, NULL);
         if (prev != NULL) {
-            prev->xorPtr = XOR(newAppointment, XOR(prev->xorPtr, NULL));
-        }
+            prev->xorPtr = XOR(newAppointment, XOR(prev->xorPtr, NULL));}
         else {
             appointmentList = newAppointment;
         }
-        prev = newAppointment;
-    }
+        prev = newAppointment;}
 
-    fclose(file);
-}
+    fclose(file);}
 
 /**
  * @brief Creates and returns an empty queue.
@@ -900,9 +880,7 @@ void enqueue(Queue* queue, const char* petName, const char* scheduleDetails) {
  * @return Pointer to the dequeued FeedingSchedule (caller responsible for freeing).
  */
 FeedingSchedule* dequeue(Queue* queue) {
-    if (queue->front == NULL) {
-        return NULL;
-    }
+    if (queue->front == NULL) { return NULL;}
 
     FeedingSchedule* temp = queue->front;
     queue->front = queue->front->next;
@@ -938,8 +916,7 @@ void addFeedingSchedule(Queue* feedingQueue) {
 
     enqueue(feedingQueue, petName, scheduleDetails);
 
-    printf("Feeding schedule added successfully for pet: %s\n", petName);
-}
+    printf("Feeding schedule added successfully for pet: %s\n", petName);}
 
 /**
  * @brief Updates an existing feeding schedule for a specific pet.
@@ -949,8 +926,7 @@ void addFeedingSchedule(Queue* feedingQueue) {
  */
 void updateFeedingSchedule(Queue* feedingQueue, const char* petName, const char* newDetails) {
     if (isQueueEmpty(feedingQueue)) {
-        printf("No feeding schedules available.\n");
-        return;
+        printf("No feeding schedules available.\n");return;
     }
 
     FeedingSchedule* current = feedingQueue->front;
@@ -978,8 +954,7 @@ void updateFeedingSchedule(Queue* feedingQueue, const char* petName, const char*
  */
 void deleteFeedingSchedule(Queue* feedingQueue, const char* petName) {
     if (isQueueEmpty(feedingQueue)) {
-        printf("No feeding schedules available.\n");
-        return;
+        printf("No feeding schedules available.\n");return;
     }
 
     FeedingSchedule* current = feedingQueue->front;
@@ -1006,8 +981,7 @@ void deleteFeedingSchedule(Queue* feedingQueue, const char* petName) {
             }
 
             free(current);
-            printf("Feeding schedule for '%s' deleted successfully.\n", petName);
-            return;
+            printf("Feeding schedule for '%s' deleted successfully.\n", petName);return;
         }
 
         previous = current;
@@ -1069,8 +1043,7 @@ void addMedicineSchedule(Queue* medicineQueue, const char* petName, const char* 
  */
 void updateMedicineSchedule(Queue* medicineQueue, const char* petName, const char* newDetails) {
     if (isQueueEmpty(medicineQueue)) {
-        printf("No medicine schedules available.\n");
-        return;
+        printf("No medicine schedules available.\n");return;
     }
 
     FeedingSchedule* current = medicineQueue->front;
@@ -1098,8 +1071,7 @@ void updateMedicineSchedule(Queue* medicineQueue, const char* petName, const cha
  */
 void deleteMedicineSchedule(Queue* medicineQueue, const char* petName) {
     if (isQueueEmpty(medicineQueue)) {
-        printf("No medicine schedules available.\n");
-        return;
+        printf("No medicine schedules available.\n");return;
     }
 
     FeedingSchedule* current = medicineQueue->front;
@@ -1126,8 +1098,7 @@ void deleteMedicineSchedule(Queue* medicineQueue, const char* petName) {
             }
 
             free(current);
-            printf("Medicine schedule for '%s' deleted successfully.\n", petName);
-            return;
+            printf("Medicine schedule for '%s' deleted successfully.\n", petName);return;
         }
 
         previous = current;
@@ -1241,8 +1212,7 @@ bool isPetOwnedByUser(Pet* petList, const char* petName, const char* owner) {
 void saveBirthdaysToFile(BPlusTree* birthdayTree, const char* filename, Pet* petList) {
     FILE* file = fopen(filename, "wb");
     if (!file) {
-        perror("Error opening birthdays file");
-        return;
+        perror("Error opening birthdays file");return;
     }
 
     // Traverse the B+ tree to write all birthdays
@@ -1314,8 +1284,7 @@ void saveBPlusTreeToFile(BPlusNode* node, FILE* file, Pet* petList) {
 void loadBirthdaysFromFile(BPlusTree* birthdayTree, const char* filename, Pet** petList) {
     FILE* file = fopen(filename, "rb");
     if (!file) {
-        perror("Error opening birthdays file");
-        return;
+        perror("Error opening birthdays file");return;
     }
 
     const char* encryptionKey = "SecretKey"; // Encryption key
@@ -1328,21 +1297,18 @@ void loadBirthdaysFromFile(BPlusTree* birthdayTree, const char* filename, Pet** 
 
         char* nameBuf = (char*)malloc(nameLen);
         if (!nameBuf) {
-            perror("Memory allocation error for nameBuf");
-            break;
+            perror("Memory allocation error for nameBuf");break;
         }
 
         if (fread(nameBuf, sizeof(char), nameLen, file) != nameLen) {
-            free(nameBuf);
-            break;
+            free(nameBuf);break;
         }
 
         xorEncryptDecrypt(nameBuf, nameLen, encryptionKey);
 
         size_t typeLen;
         if (fread(&typeLen, sizeof(size_t), 1, file) != 1) {
-            free(nameBuf);
-            break;
+            free(nameBuf);break;
         }
 
         char* typeBuf = (char*)malloc(typeLen);
@@ -1507,14 +1473,9 @@ static void computeLPSArray(const char* pattern, int M, int* lps) {
     int i = 1;
     while (i < M) {
         if (pattern[i] == pattern[len]) {
-            len++;
-            lps[i] = len;
-            i++;
-        }
+            len++;lps[i] = len;i++;}
         else {
-            if (len != 0) {
-                len = lps[len - 1];
-            }
+            if (len != 0) {len = lps[len - 1];}
             else {
                 lps[i] = 0;
                 i++;
@@ -1544,8 +1505,7 @@ bool KMPcontains(const char* text, const char* pattern) {
         }
         if (j == M) {
             free(lps);
-            return true;
-        }
+            return true;}
         else if (i < N && pattern[j] != text[i]) {
             if (j != 0) j = lps[j - 1];
             else i++;
@@ -1562,28 +1522,23 @@ bool KMPcontains(const char* text, const char* pattern) {
  */
 void loadStrayAnimalsFromFile(StrayAnimal** list, const char* filename) {
     FILE* file = fopen(filename, "rb");
-    if (!file) {
-        return;
-    }
+    if (!file) {return;}
     StrayAnimal temp;
     while (fread(&temp, sizeof(StrayAnimal), 1, file) == 1) {
         // XOR Decrypt struct
         xorEncryptDecrypt((char*)&temp, sizeof(StrayAnimal), STRAY_KEY);
 
-        // Bellekte yeni nod
         StrayAnimal* newAnimal = (StrayAnimal*)malloc(sizeof(StrayAnimal));
         memcpy(newAnimal, &temp, sizeof(StrayAnimal));
         newAnimal->next = NULL;
 
-        // Listeye ekle
         if (*list == NULL) {
             *list = newAnimal;
         }
         else {
             StrayAnimal* cur = *list;
             while (cur->next != NULL) {
-                cur = cur->next;
-            }
+                cur = cur->next;}
             cur->next = newAnimal;
         }
     }
@@ -1598,8 +1553,7 @@ void loadStrayAnimalsFromFile(StrayAnimal** list, const char* filename) {
 void saveStrayAnimalsToFile(StrayAnimal* list, const char* filename) {
     FILE* file = fopen(filename, "wb");
     if (!file) {
-        perror("Error opening adoptable file");
-        return;
+        perror("Error opening adoptable file");return;
     }
     StrayAnimal* current = list;
     while (current) {
@@ -1626,9 +1580,7 @@ void addStrayAnimalToList(StrayAnimal** list, const char* type, const char* gend
     static int globalID = 1;
     StrayAnimal* cur = *list;
     while (cur) {
-        if (cur->id >= globalID) {
-            globalID = cur->id + 1;
-        }
+        if (cur->id >= globalID) {globalID = cur->id + 1;}
         cur = cur->next;
     }
 
@@ -1647,8 +1599,7 @@ void addStrayAnimalToList(StrayAnimal** list, const char* type, const char* gend
     else {
         StrayAnimal* temp = *list;
         while (temp->next != NULL) {
-            temp = temp->next;
-        }
+            temp = temp->next;}
         temp->next = newAnimal;
     }
     printf("Stray animal added with ID: %d\n", newAnimal->id);
@@ -1707,10 +1658,8 @@ void deleteStrayAnimal(StrayAnimal** list, int id) {
             return;
         }
         prev = current;
-        current = current->next;
-    }
-    printf("Stray animal with ID %d not found.\n", id);
-}
+        current = current->next;}
+    printf("Stray animal with ID %d not found.\n", id);}
 
 /**
  * @brief Lists all stray animals currently available.
@@ -1718,8 +1667,7 @@ void deleteStrayAnimal(StrayAnimal** list, int id) {
  */
 void listStrayAnimals(StrayAnimal* list) {
     if (!list) {
-        printf("No stray animals available.\n");
-        return;
+        printf("No stray animals available.\n");return;
     }
     printf("\n--- List of Stray Animals ---\n");
     StrayAnimal* current = list;
@@ -1738,8 +1686,7 @@ void listStrayAnimals(StrayAnimal* list) {
  */
 void searchStrayAnimalsKMP(StrayAnimal* list, const char* searchKey) {
     if (!list) {
-        printf("No stray animals to search.\n");
-        return;
+        printf("No stray animals to search.\n");return;
     }
     int found = 0;
     StrayAnimal* current = list;
@@ -1786,8 +1733,7 @@ void loadAdoptedAnimalsFromFile(AdoptedAnimal** list, const char* filename) {
             AdoptedAnimal* cur = *list;
             while (cur->next != NULL) {
                 cur = cur->next;
-            }
-            cur->next = newAdopted;
+            }cur->next = newAdopted;
         }
     }
     fclose(file);
@@ -1801,8 +1747,7 @@ void loadAdoptedAnimalsFromFile(AdoptedAnimal** list, const char* filename) {
 void saveAdoptedAnimalsToFile(AdoptedAnimal* list, const char* filename) {
     FILE* file = fopen(filename, "wb");
     if (!file) {
-        perror("Error opening adopted file");
-        return;
+        perror("Error opening adopted file");return;
     }
     AdoptedAnimal* current = list;
     while (current) {
@@ -1828,8 +1773,7 @@ void adoptStrayAnimal(StrayAnimal** strayList,
     const char* adoptionDate)
 {
     if (!(*strayList)) {
-        printf("No stray animals available to adopt.\n");
-        return;
+        printf("No stray animals available to adopt.\n");   return;
     }
 
     StrayAnimal* current = *strayList;
@@ -1862,9 +1806,7 @@ void adoptStrayAnimal(StrayAnimal** strayList,
                 AdoptedAnimal* tmp = adoptedList;
                 while (tmp->next) {
                     tmp = tmp->next;
-                }
-                tmp->next = newNode;
-            }
+                }tmp->next = newNode;}
 
             saveAdoptedAnimalsToFile(adoptedList, "adopted.dat");
 
@@ -1876,7 +1818,6 @@ void adoptStrayAnimal(StrayAnimal** strayList,
             }
             free(current);
 
-            // adoptable.dat dosyasını güncelle
             saveStrayAnimalsToFile(*strayList, "adoptable.dat");
 
             printf("Adoption complete. Animal ID %d adopted.\n", chosenID);
@@ -1946,9 +1887,7 @@ static void traverseBPlusNodeForBirthdays(BPlusNode* node, Pet* petList) {
 
 void listPetBirthdays(BPlusTree* birthdayTree, Pet* petList) {
     if (!birthdayTree || !birthdayTree->root) {
-        printf("No birthdays recorded.\n");
-        return;
-    }
+        printf("No birthdays recorded.\n"); return;}
     printf("\n--- List of Pet Birthdays ---\n");
     traverseBPlusNodeForBirthdays(birthdayTree->root, petList);
     printf("--------------------------------\n");
